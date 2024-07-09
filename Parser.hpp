@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_PARSER_H_INCLUDED
-# define YY_YY_PARSER_H_INCLUDED
+#ifndef YY_YY_PARSER_HPP_INCLUDED
+# define YY_YY_PARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -49,7 +49,7 @@ extern int yydebug;
 
   typedef void* yyscan_t;
 
-#line 53 "Parser.h"
+#line 53 "Parser.hpp"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -98,7 +98,7 @@ union YYSTYPE
     int num;
     char *id;
 
-#line 102 "Parser.h"
+#line 102 "Parser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -112,4 +112,4 @@ typedef union YYSTYPE YYSTYPE;
 int yyparse (yyscan_t scanner);
 
 
-#endif /* !YY_YY_PARSER_H_INCLUDED  */
+#endif /* !YY_YY_PARSER_HPP_INCLUDED  */

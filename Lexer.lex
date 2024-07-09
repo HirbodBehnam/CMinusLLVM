@@ -1,9 +1,8 @@
 %{
-#include "Parser.h"
-
+#include "Parser.hpp"
 %}
 
-%option outfile="Lexer.c" header-file="Lexer.h"
+%option outfile="Lexer.cpp" header-file="Lexer.hpp"
 %option warn nodefault
 %option reentrant noyywrap yylineno
 %option bison-bridge

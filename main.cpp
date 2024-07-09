@@ -1,7 +1,7 @@
-#include "Parser.h"
-#include "Lexer.h"
+#include "Parser.hpp"
+#include "Lexer.hpp"
 
-#include <stdio.h>
+#include <iostream>
 
 void parse_input(const char *filename) {
     yyscan_t scanner;
@@ -9,19 +9,19 @@ void parse_input(const char *filename) {
     // Open the file
     FILE *input_file = fopen(filename, "r");
     if (input_file == NULL) {
-        printf("Cannot open file %s\n", filename);
+        std::cerr << "Cannot open file " << filename << std::endl;
         exit(1);
     }
 
     if (yylex_init(&scanner)) {
-        puts("Shash in init");
+        std::cerr << "Shash in init" << std::endl;
         exit(1);
     }
 
     yyset_in(input_file, scanner);
 
     if (yyparse(scanner)) {
-        puts("Shash in parse");
+        std::cerr << "Shash in parse" << std::endl;
         exit(1);
     }
 
@@ -32,7 +32,7 @@ void parse_input(const char *filename) {
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
-        puts("Please pass the filename as the first argument.");
+        std::cerr << "Please pass the filename as the first argument." << std::endl;
         return 1;
     }
     parse_input(argv[1]);

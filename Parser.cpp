@@ -70,13 +70,13 @@
 #line 1 "Parser.y"
 
 
-#include "Parser.h"
-#include "Lexer.h"
+#include "Parser.hpp"
+#include "Lexer.hpp"
 
 int yyerror(yyscan_t scanner, const char *msg);
 
 
-#line 80 "Parser.c"
+#line 80 "Parser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -99,7 +99,7 @@ int yyerror(yyscan_t scanner, const char *msg);
 #  endif
 # endif
 
-#include "Parser.h"
+#include "Parser.hpp"
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -1258,7 +1258,7 @@ yyreduce:
   switch (yyn)
     {
 
-#line 1262 "Parser.c"
+#line 1262 "Parser.cpp"
 
       default: break;
     }

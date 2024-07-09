@@ -1,6 +1,6 @@
-#line 2 "Lexer.c"
+#line 2 "Lexer.cpp"
 
-#line 4 "Lexer.c"
+#line 4 "Lexer.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -499,12 +499,11 @@ static const flex_int32_t yy_rule_can_match_eol[33] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "Lexer.lex"
 #line 2 "Lexer.lex"
-#include "Parser.h"
-
-#line 505 "Lexer.c"
+#include "Parser.hpp"
+#line 504 "Lexer.cpp"
 /* Used https://stackoverflow.com/a/2130124/4213397 */
 
-#line 508 "Lexer.c"
+#line 507 "Lexer.cpp"
 
 #define INITIAL 0
 #define C_COMMENT 1
@@ -779,9 +778,9 @@ YY_DECL
 		}
 
 	{
-#line 19 "Lexer.lex"
+#line 18 "Lexer.lex"
 
-#line 785 "Lexer.c"
+#line 784 "Lexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -852,170 +851,170 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 20 "Lexer.lex"
+#line 19 "Lexer.lex"
 { return SEMICOLON;  }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 21 "Lexer.lex"
+#line 20 "Lexer.lex"
 { return COLON;      }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 22 "Lexer.lex"
+#line 21 "Lexer.lex"
 { return COMMA;      }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 23 "Lexer.lex"
+#line 22 "Lexer.lex"
 { return LBRACES;    }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 24 "Lexer.lex"
+#line 23 "Lexer.lex"
 { return RBRACES;    }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 25 "Lexer.lex"
+#line 24 "Lexer.lex"
 { return LPAREN;     }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 26 "Lexer.lex"
+#line 25 "Lexer.lex"
 { return RPAREN;     }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 27 "Lexer.lex"
+#line 26 "Lexer.lex"
 { return LCURVBRACES;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 28 "Lexer.lex"
+#line 27 "Lexer.lex"
 { return RCURVBRACES;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 29 "Lexer.lex"
+#line 28 "Lexer.lex"
 { return PLUS;       }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 30 "Lexer.lex"
+#line 29 "Lexer.lex"
 { return MINUS;      }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 31 "Lexer.lex"
+#line 30 "Lexer.lex"
 { return TIMES;      }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 32 "Lexer.lex"
+#line 31 "Lexer.lex"
 { return EQL;        }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 33 "Lexer.lex"
+#line 32 "Lexer.lex"
 { return LSS;        }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 34 "Lexer.lex"
+#line 33 "Lexer.lex"
 { return DOUBLE_EQ;  }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 35 "Lexer.lex"
+#line 34 "Lexer.lex"
 { return IFSYM;      }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 36 "Lexer.lex"
+#line 35 "Lexer.lex"
 { return ELSESYM;    }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 37 "Lexer.lex"
+#line 36 "Lexer.lex"
 { return VOIDSYM;    }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 38 "Lexer.lex"
+#line 37 "Lexer.lex"
 { return INTSYM;     }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 39 "Lexer.lex"
+#line 38 "Lexer.lex"
 { return FORSYM;     }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 40 "Lexer.lex"
+#line 39 "Lexer.lex"
 { return RETURNSYM;  }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 41 "Lexer.lex"
+#line 40 "Lexer.lex"
 { return ENDIFSYM;   }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 42 "Lexer.lex"
+#line 41 "Lexer.lex"
 { return BREAKSYM;   }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 43 "Lexer.lex"
+#line 42 "Lexer.lex"
 {
                        yylval->id = strdup(yytext);
                        return ID;      }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 46 "Lexer.lex"
+#line 45 "Lexer.lex"
 { yylval->num = atoi(yytext);
                        return NUM;     }
 	YY_BREAK
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 48 "Lexer.lex"
+#line 47 "Lexer.lex"
 /* skip whitespace */
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 50 "Lexer.lex"
+#line 49 "Lexer.lex"
 { BEGIN(C_COMMENT); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 51 "Lexer.lex"
+#line 50 "Lexer.lex"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 52 "Lexer.lex"
+#line 51 "Lexer.lex"
 { }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 53 "Lexer.lex"
+#line 52 "Lexer.lex"
 { }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 54 "Lexer.lex"
+#line 53 "Lexer.lex"
 { printf("Unknown character [%c]\n",yytext[0]); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 55 "Lexer.lex"
+#line 54 "Lexer.lex"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1019 "Lexer.c"
+#line 1018 "Lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(C_COMMENT):
 	yyterminate();
@@ -2208,7 +2207,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 55 "Lexer.lex"
+#line 54 "Lexer.lex"
 
 
 int yyerror(yyscan_t scanner, const char *msg) {

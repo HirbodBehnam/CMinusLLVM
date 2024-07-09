@@ -1,7 +1,7 @@
 %{
 
-#include "Parser.h"
-#include "Lexer.h"
+#include "Parser.hpp"
+#include "Lexer.hpp"
 
 int yyerror(yyscan_t scanner, const char *msg);
 
@@ -12,8 +12,8 @@ int yyerror(yyscan_t scanner, const char *msg);
 }
 
 %require "3.2"
-%output  "Parser.c"
-%defines "Parser.h"
+%output  "Parser.cpp"
+%defines "Parser.hpp"
 
 %define api.pure
 %lex-param   { yyscan_t scanner }
