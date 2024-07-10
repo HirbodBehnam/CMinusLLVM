@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 10 "Parser.y"
+#line 12 "Parser.y"
 
   typedef void* yyscan_t;
 
@@ -93,7 +93,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 22 "Parser.y"
+#line 24 "Parser.y"
 
     int num;
     char *id;

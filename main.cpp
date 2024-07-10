@@ -1,5 +1,6 @@
 #include "Parser.hpp"
 #include "Lexer.hpp"
+#include "codegen.hpp"
 
 #include <iostream>
 
@@ -8,7 +9,7 @@ void parse_input(const char *filename) {
 
     // Open the file
     FILE *input_file = fopen(filename, "r");
-    if (input_file == NULL) {
+    if (input_file == nullptr) {
         std::cerr << "Cannot open file " << filename << std::endl;
         exit(1);
     }
@@ -20,6 +21,11 @@ void parse_input(const char *filename) {
 
     yyset_in(input_file, scanner);
 
+    // Create the codegen stuff
+    CodeGenerator code_generator(scanner);
+    yyset_extra(&code_generator, scanner);
+
+    // Parse the input
     if (yyparse(scanner)) {
         std::cerr << "Shash in parse" << std::endl;
         exit(1);

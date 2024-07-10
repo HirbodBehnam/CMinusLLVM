@@ -14,6 +14,8 @@
 #include <llvm/IR/Verifier.h>
 #include <memory>
 #include <string>
+#include <variant>
+#include <vector>
 #include <unordered_map>
 
 class CodeGenerator
@@ -26,8 +28,26 @@ private:
     std::unordered_map<std::string, llvm::Value *> global_variables;
     yyscan_t scanner;
 
-    // Variables for the code generator itself
-
+    // Different types of operators of the language
+    enum class Operator { 
+        PLUS,
+        MINUS,
+        MULT,
+        LESS_THAN,
+        EQUALS,
+    };
+    std::vector<CodeGenerator::Operator> operator_stack;
+    // Each variable or function is either int or void
+    enum class VariableType {
+        VOID,
+        INT,
+    };
+    // Types which can be pushed in the semantic stack
+    typedef std::variant<llvm::Value *, CodeGenerator::VariableType> SemanticStaticObject;
+    // The good old semantic stack
+    std::vector<SemanticStaticObject> semantic_stack;
 public:
     explicit CodeGenerator(yyscan_t scanner);
+    void int_type();
+    void void_type();
 };

@@ -6,3 +6,11 @@ CodeGenerator::CodeGenerator(yyscan_t scanner) : the_context(std::make_unique<ll
                                                           scanner(scanner)
 {
 }
+
+void CodeGenerator::void_type() {
+    this->semantic_stack.push_back(VariableType::VOID);
+}
+
+void CodeGenerator::int_type() {
+    this->semantic_stack.push_back(VariableType::INT);
+}

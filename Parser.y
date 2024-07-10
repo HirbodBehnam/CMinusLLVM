@@ -1,9 +1,11 @@
 %{
-
 #include "Parser.hpp"
 #include "Lexer.hpp"
+#include "codegen.hpp"
 
 int yyerror(yyscan_t scanner, const char *msg);
+
+#define GET_CODEGEN() static_cast<CodeGenerator *>(yyget_extra(scanner))
 
 %}
 
@@ -55,11 +57,13 @@ int yyerror(yyscan_t scanner, const char *msg);
 Program: Global-Declaration-list ;
 Global-Declaration-list: Global-Declaration Global-Declaration-list | ;
 Global-Declaration: Global-Declaration-initial Global-Declaration-prime ;
-Global-Declaration-initial: Global-Type-specifier ID ;
+Global-Declaration-initial: Global-Type-specifier __declaring_pid ID ;
 Global-Declaration-prime: Fun-declaration-prime | Var-declaration-prime ;
 Var-declaration-prime: LBRACES NUM RBRACES SEMICOLON | SEMICOLON ;
 Fun-declaration-prime: LPAREN Params RPAREN Compound-stmt ;
-Global-Type-specifier: INTSYM | VOIDSYM ;
+Global-Type-specifier: INTSYM  { GET_CODEGEN()->int_type(); }
+                     | VOIDSYM { GET_CODEGEN()->void_type(); }
+                     ;
 Params: INTSYM ID Param-prime Param-list | VOIDSYM ;
 Param-list: COMMA Param Param-list | ;
 Param: INTSYM ID Param-prime ;
@@ -103,4 +107,5 @@ Args: Arg-list | ;
 Arg-list: Expression Arg-list-prime ;
 Arg-list-prime: COMMA Expression Arg-list-prime | ;
 
+__declaring_pid: { printf("new pid\n"); };
 %%

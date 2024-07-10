@@ -1,8 +1,8 @@
 FILES = Lexer.cpp Parser.cpp codegen.cpp main.cpp
 CC = clang++-15
-CFLAGS = -g `llvm-config-15 --cxxflags --ldflags --system-libs --libs core`
+CFLAGS = -g `llvm-config-15 --cxxflags --ldflags --system-libs --libs core` -std=c++17
 
-compiler: $(FILES)
+all: $(FILES)
 	$(CC) $(CFLAGS) $(FILES) -o compiler
 
 Lexer.cpp: Lexer.lex
