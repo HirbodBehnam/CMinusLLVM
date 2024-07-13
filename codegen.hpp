@@ -46,8 +46,20 @@ private:
     typedef std::variant<llvm::Value *, CodeGenerator::VariableType> SemanticStaticObject;
     // The good old semantic stack
     std::vector<SemanticStaticObject> semantic_stack;
+    // Name of the variable we are declaring
+    std::string declaring_pid_name;
+    // True if we are in global scope, otherwise false.
+    bool in_global_scope;
+
+    // Function calls
+    void generate_prelude();
 public:
+    // Function calls
     explicit CodeGenerator(yyscan_t scanner);
-    void int_type();
+    void print_code();
     void void_type();
+    void int_type();
+    void declaring_pid(const char *);
+    void variable_declared();
+    void array_declared();
 };

@@ -31,6 +31,8 @@ void parse_input(const char *filename) {
         exit(1);
     }
 
+    code_generator.print_code();
+
     yylex_destroy(scanner);
     fclose(input_file);
 }

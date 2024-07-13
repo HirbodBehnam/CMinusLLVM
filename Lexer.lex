@@ -40,7 +40,7 @@ letter        [a-zA-Z]
 "endif"              { return ENDIFSYM;   }
 "break"              { return BREAKSYM;   }
 {letter}({letter}|{digit})* {
-                       yylval->id = strdup(yytext);
+                       yylval->id = yytext;
                        return ID;      }
 {digit}+             { yylval->num = atoi(yytext);
                        return NUM;     }

@@ -968,7 +968,7 @@ case 24:
 YY_RULE_SETUP
 #line 42 "Lexer.lex"
 {
-                       yylval->id = strdup(yytext);
+                       yylval->id = yytext;
                        return ID;      }
 	YY_BREAK
 case 25:
