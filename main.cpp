@@ -22,7 +22,7 @@ void parse_input(const char *filename) {
     yyset_in(input_file, scanner);
 
     // Create the codegen stuff
-    CodeGenerator code_generator(scanner);
+    CodeGenerator code_generator;
     yyset_extra(&code_generator, scanner);
 
     // Parse the input

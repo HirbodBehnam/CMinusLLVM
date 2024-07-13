@@ -1,4 +1,6 @@
 int a;
+int arr[10];
+int b;
 
 void main(void){
 	

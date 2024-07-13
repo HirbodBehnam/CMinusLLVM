@@ -2,11 +2,10 @@
 
 #include <array>
 
-CodeGenerator::CodeGenerator(yyscan_t scanner) : the_context(std::make_unique<llvm::LLVMContext>()),
-                                                 the_module(std::make_unique<llvm::Module>("C-Compiler", *the_context)),
-                                                 builder(std::make_unique<llvm::IRBuilder<>>(*the_context)),
-                                                 scanner(scanner),
-                                                 in_global_scope(true)
+CodeGenerator::CodeGenerator() : the_context(std::make_unique<llvm::LLVMContext>()),
+                                 the_module(std::make_unique<llvm::Module>("C-Compiler", *the_context)),
+                                 builder(std::make_unique<llvm::IRBuilder<>>(*the_context)),
+                                 in_global_scope(true)
 {
     generate_prelude();
 }
@@ -26,30 +25,31 @@ void CodeGenerator::generate_prelude()
         static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), '\n')),
         static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), '\0')),
     };
-    auto format_string_value = llvm::ConstantArray::get(format_string_type, llvm::ArrayRef(format_string_bytes.cbegin(), format_string_bytes.cend()));
+    auto format_string_value = llvm::ConstantArray::get(format_string_type, llvm::ArrayRef(format_string_bytes));
     // NOTE: this value is declared with new to outlive the program. I should not be freed until the very end
     auto number_format = new llvm::GlobalVariable(*this->the_module, format_string_type, true, llvm::GlobalValue::LinkageTypes::PrivateLinkage, format_string_value, "number_format");
     // Declare the printf function from standard C library
     std::array printf_function_arguments{
         static_cast<llvm::Type *>(llvm::PointerType::getUnqual(format_string_type)),
     };
-    auto printf_function_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*this->the_context), llvm::ArrayRef(printf_function_arguments.cbegin(), printf_function_arguments.cend()), true);
+    auto printf_function_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*this->the_context), llvm::ArrayRef(printf_function_arguments), true);
     auto printf_function = llvm::Function::Create(printf_function_type, llvm::GlobalValue::LinkageTypes::ExternalLinkage, "printf", this->the_module.get());
     // Declare the output function which simply prints an int
     std::array output_function_arguments{
         static_cast<llvm::Type *>(llvm::Type::getInt32Ty(*this->the_context)),
     };
-    auto output_function_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*this->the_context), llvm::ArrayRef(output_function_arguments.cbegin(), output_function_arguments.cend()), false);
+    auto output_function_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*this->the_context), llvm::ArrayRef(output_function_arguments), false);
     auto output_function = llvm::Function::Create(output_function_type, llvm::GlobalValue::LinkageTypes::PrivateLinkage, "output", this->the_module.get());
     output_function->getArg(0)->setName("a");
     // In the output function, call the printf function
     auto output_function_block = llvm::BasicBlock::Create(*this->the_context, "", output_function);
     this->builder->SetInsertPoint(output_function_block);
-    std::array output_function_call_arguments{ // the string format and the number
+    std::array output_function_call_arguments{
+        // the string format and the number
         static_cast<llvm::Value *>(number_format),
         static_cast<llvm::Value *>(output_function->getArg(0)),
     };
-    this->builder->CreateCall(printf_function, llvm::ArrayRef(output_function_call_arguments.cbegin(), output_function_call_arguments.cend()));
+    this->builder->CreateCall(printf_function, llvm::ArrayRef(output_function_call_arguments));
     this->builder->CreateRet(nullptr); // ret void
 }
 
@@ -94,8 +94,52 @@ void CodeGenerator::declaring_pid(const char *pid)
  */
 void CodeGenerator::variable_declared()
 {
+    assert(!this->declaring_pid_name.empty()); // something should be declared
+    assert(std::get<CodeGenerator::VariableType>(this->semantic_stack.back()) == CodeGenerator::VariableType::INT);
+    this->semantic_stack.pop_back(); // pop the int from stack
+
+    auto zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context), 0, true);
+    if (this->in_global_scope)
+    {
+        // Check if a previous global variable is declared using the name
+        assert(!this->the_module->getNamedGlobal(this->declaring_pid_name));
+        // Create the global variable
+        new llvm::GlobalVariable(*this->the_module, llvm::Type::getInt32Ty(*this->the_context), false, llvm::GlobalValue::LinkageTypes::InternalLinkage, zero, this->declaring_pid_name);
+    }
+    else
+    {
+        assert(false);
+    }
+    this->declaring_pid_name.clear();
 }
 
 void CodeGenerator::array_declared()
 {
+    assert((!this->declaring_pid_name.empty()));                 // something should be declared
+    int array_size = std::get<int>(this->semantic_stack.back()); // get the size of the array
+    this->semantic_stack.pop_back();                             // pop the size
+    assert(std::get<CodeGenerator::VariableType>(this->semantic_stack.back()) == CodeGenerator::VariableType::INT);
+    this->semantic_stack.pop_back(); // pop the int from stack
+
+    auto array_type = llvm::ArrayType::get(llvm::Type::getInt32Ty(*this->the_context), array_size);
+    if (this->in_global_scope)
+    {
+        // Check if a previous global variable is declared using the name
+        assert(!this->the_module->getNamedGlobal(this->declaring_pid_name));
+        // Create the global variable
+        new llvm::GlobalVariable(*this->the_module, array_type, false, llvm::GlobalValue::LinkageTypes::InternalLinkage, llvm::ConstantAggregateZero::get(array_type), this->declaring_pid_name);
+    }
+    else
+    {
+        assert(false);
+    }
+    this->declaring_pid_name.clear();
+}
+
+/**
+ * Immediate will push the immediate argument to the stack.
+ */
+void CodeGenerator::immediate(int imm)
+{
+    this->semantic_stack.push_back(imm);
 }

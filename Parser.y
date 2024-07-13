@@ -59,8 +59,8 @@ Global-Declaration-list: Global-Declaration Global-Declaration-list | ;
 Global-Declaration: Global-Declaration-initial Global-Declaration-prime ;
 Global-Declaration-initial: Global-Type-specifier ID __declaring_pid ;
 Global-Declaration-prime: Fun-declaration-prime | Var-declaration-prime ;
-Var-declaration-prime: LBRACES NUM RBRACES SEMICOLON { GET_CODEGEN()->array_declared(); }
-                     | SEMICOLON                     { GET_CODEGEN()->variable_declared(); }
+Var-declaration-prime: LBRACES NUM __immediate RBRACES SEMICOLON { GET_CODEGEN()->array_declared(); }
+                     | SEMICOLON                                 { GET_CODEGEN()->variable_declared(); }
                      ;
 Fun-declaration-prime: LPAREN Params RPAREN Compound-stmt ;
 Global-Type-specifier: INTSYM  { GET_CODEGEN()->int_type(); }
@@ -109,5 +109,6 @@ Args: Arg-list | ;
 Arg-list: Expression Arg-list-prime ;
 Arg-list-prime: COMMA Expression Arg-list-prime | ;
 
-__declaring_pid: { GET_CODEGEN()->declaring_pid(yylval.id); };
+__declaring_pid: { GET_CODEGEN()->declaring_pid(yylval.id); } ;
+__immediate: { GET_CODEGEN()->immediate(yylval.num); } ;
 %%
