@@ -63,8 +63,8 @@ Var-declaration-prime: LBRACES NUM __immediate RBRACES SEMICOLON { GET_CODEGEN()
                      | SEMICOLON                                 { GET_CODEGEN()->variable_declared(); }
                      ;
 Fun-declaration-prime: __function_start LPAREN Params RPAREN __function_params_end Compound-stmt __function_end ;
-Global-Type-specifier: INTSYM  { GET_CODEGEN()->int_type(); }
-                     | VOIDSYM { GET_CODEGEN()->void_type(); }
+Global-Type-specifier: INTSYM  __int_type
+                     | VOIDSYM __void_type
                      ;
 Params: INTSYM ID __declaring_pid Param-prime Param-list | VOIDSYM ;
 Param-list: COMMA Param Param-list | ;
@@ -73,7 +73,7 @@ Param-prime: LBRACES RBRACES { GET_CODEGEN()->array_param(); }
            |                 { GET_CODEGEN()->int_param(); }
            ;
 Local-Declaration-list: Local-Declaration Local-Declaration-list | ;
-Local-Declaration: INTSYM ID Var-declaration-prime ;
+Local-Declaration: INTSYM __int_type ID __declaring_pid Var-declaration-prime ;
 Compound-stmt: LCURVBRACES Local-Declaration-list Statement-list RCURVBRACES ;
 Statement-list: Statement Statement-list | ;
 Statement: Expression-stmt | Compound-stmt | Selection-stmt | Iteration-stmt | Return-stmt ;
@@ -113,6 +113,8 @@ Arg-list-prime: COMMA Expression Arg-list-prime | ;
 
 __declaring_pid: { GET_CODEGEN()->declaring_pid(yylval.id); } ;
 __immediate: { GET_CODEGEN()->immediate(yylval.num); } ;
+__int_type: { GET_CODEGEN()->int_type(); } ;
+__void_type: { GET_CODEGEN()->void_type(); } ;
 __function_start: { GET_CODEGEN()->function_start(); } ;
 __function_params_end: { GET_CODEGEN()->function_params_end(); } ;
 __function_end: { GET_CODEGEN()->function_end(); };

@@ -4,7 +4,7 @@
 
 CodeGenerator::CodeGenerator() : the_context(std::make_unique<llvm::LLVMContext>()),
                                  the_module(std::make_unique<llvm::Module>("C-Compiler", *the_context)),
-                                 builder(std::make_unique<llvm::IRBuilder<>>(*the_context)),
+                                 builder(std::make_unique<llvm::IRBuilder<llvm::NoFolder>>(*the_context)),
                                  in_global_scope(true)
 {
     generate_prelude();
@@ -108,7 +108,11 @@ void CodeGenerator::variable_declared()
     }
     else
     {
-        assert(false);
+        // Check if a previous local variable is declared using the name
+        assert(this->local_variables.count(this->declaring_pid_name) == 0);
+        // Create an add instruction with zero operands to assign a new variable
+        auto created_value = this->builder->CreateOr(zero, zero, this->declaring_pid_name);
+        this->local_variables.emplace(std::move(this->declaring_pid_name), created_value);
     }
     this->declaring_pid_name.clear();
 }
@@ -131,7 +135,12 @@ void CodeGenerator::array_declared()
     }
     else
     {
-        assert(false);
+        // Check if a previous local variable is declared using the name
+        assert(this->local_variables.count(this->declaring_pid_name) == 0);
+        // Allocate memory on stack
+        auto one_value = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context), 1, true);
+        auto alloca = this->builder->CreateAlloca(array_type, one_value, this->declaring_pid_name);
+        this->local_variables.emplace(std::move(this->declaring_pid_name), alloca);
     }
     this->declaring_pid_name.clear();
 }

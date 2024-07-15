@@ -10,6 +10,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/NoFolder.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Verifier.h>
 #include <memory>
@@ -36,8 +37,10 @@ class CodeGenerator
 private:
     // LLVM codegen variables
     std::unique_ptr<llvm::LLVMContext> the_context;
-    std::unique_ptr<llvm::IRBuilder<>> builder;
+    std::unique_ptr<llvm::IRBuilder<llvm::NoFolder>> builder;
     std::unique_ptr<llvm::Module> the_module;
+
+    // List of declared variables in current scope
     std::unordered_map<std::string, llvm::Value *> local_variables;
 
     // Different types of operators of the language
