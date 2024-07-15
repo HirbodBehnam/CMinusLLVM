@@ -2,6 +2,18 @@ int a;
 int arr[10];
 int b;
 
+int function1(void){
+	
+}
+
+int function2(int p1){
+	
+}
+
+void function3(int p1, int p2, int p3[], int p4){
+	
+}
+
 void main(void){
 	
 }

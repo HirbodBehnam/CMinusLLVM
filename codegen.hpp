@@ -18,6 +18,19 @@
 #include <vector>
 #include <unordered_map>
 
+/**
+ * DeclaringFunctionParameterData is a data container which holds the metadata needed
+ * for each declared parameter of a function.
+ */
+struct DeclaringFunctionParameterData
+{
+    // The name of the parameter
+    std::string name;
+    // The type of the parameter (currently only pointer (array) and int32)
+    llvm::Type *type;
+};
+
+
 class CodeGenerator
 {
 private:
@@ -45,8 +58,10 @@ private:
     typedef std::variant<llvm::Value *, CodeGenerator::VariableType, int> SemanticStaticObject;
     // The good old semantic stack
     std::vector<SemanticStaticObject> semantic_stack;
-    // Name of the variable we are declaring
-    std::string declaring_pid_name;
+    // Name of the variable/function we are declaring
+    std::string declaring_pid_name, declaring_function_name;
+    // The list of parameters of this function which we are currently declaring.
+    std::vector<DeclaringFunctionParameterData> declaring_function_params;
     // True if we are in global scope, otherwise false.
     bool in_global_scope;
 
@@ -61,5 +76,10 @@ public:
     void declaring_pid(const char *);
     void variable_declared();
     void array_declared();
+    void function_start();
+    void array_param();
+    void int_param();
+    void function_params_end();
+    void function_end();
     void immediate(int imm);
 };

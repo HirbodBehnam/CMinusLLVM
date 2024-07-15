@@ -137,6 +137,110 @@ void CodeGenerator::array_declared()
 }
 
 /**
+ * When the function declaration begins, we only check some assertions and states and then move out of the
+ * global scope to local scope.
+ *
+ * NOTE: On top of ss, we have INT or VOID which is the return type of the function.
+ */
+void CodeGenerator::function_start()
+{
+    assert(this->in_global_scope);
+    assert(!this->declaring_pid_name.empty());
+    assert(this->declaring_function_name.empty());
+    assert(this->declaring_function_params.empty());
+    assert(this->local_variables.empty());
+
+    this->declaring_function_name = std::move(this->declaring_pid_name);
+    this->in_global_scope = false;
+    this->declaring_pid_name.clear();
+}
+
+/**
+ * Called when an int parameter is declared as an argument of function.
+ */
+void CodeGenerator::int_param()
+{
+    assert(!this->declaring_pid_name.empty());
+    assert(!this->declaring_function_name.empty());
+
+    this->declaring_function_params.push_back(DeclaringFunctionParameterData{
+        std::move(this->declaring_pid_name),
+        llvm::Type::getInt32Ty(*this->the_context)});
+    this->declaring_pid_name.clear();
+}
+
+/**
+ * Called when an array parameter is declared as an argument of function.
+ */
+void CodeGenerator::array_param()
+{
+    assert(!this->declaring_pid_name.empty());
+    assert(!this->declaring_function_name.empty());
+
+    this->declaring_function_params.push_back(DeclaringFunctionParameterData{
+        std::move(this->declaring_pid_name),
+        llvm::Type::getInt32PtrTy(*this->the_context)});
+    this->declaring_pid_name.clear();
+}
+
+/**
+ * When the function param declerations end, we shall create the prototype of the function.
+ *
+ * First, we should gather all of the arguments and create the argument list
+ * of types and their names. Then we should look at the top of ss and find out
+ * the return type of the function and at last, insert all parameters in local_variables
+ * map.
+ *
+ * Then, some cleanups should be done (emptying variables).
+ */
+void CodeGenerator::function_params_end()
+{
+    assert(this->declaring_pid_name.empty());
+    assert(!this->declaring_function_name.empty());
+    auto return_type = std::get<CodeGenerator::VariableType>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+
+    // Generate a list of argument types
+    std::vector<llvm::Type *> param_types;
+    param_types.reserve(this->declaring_function_params.size());
+    for (const auto &param : this->declaring_function_params)
+        param_types.push_back(param.type);
+    // Get the return type
+    llvm::Type *llvm_return_type = return_type == CodeGenerator::VariableType::VOID ? llvm::Type::getVoidTy(*this->the_context) : llvm::Type::getInt32Ty(*this->the_context);
+    // Generate the function
+    auto function_type = llvm::FunctionType::get(llvm_return_type, llvm::ArrayRef(param_types), false);
+    auto declared_function = llvm::Function::Create(function_type, llvm::GlobalValue::LinkageTypes::PrivateLinkage, this->declaring_function_name, this->the_module.get());
+    for (size_t i = 0; i < this->declaring_function_params.size(); i++)
+    {
+        auto argument = declared_function->getArg(i);
+        argument->setName(this->declaring_function_params.at(i).name);
+
+        // Insert into local parameters map
+        this->local_variables.emplace(std::move(this->declaring_function_params.at(i).name), argument);
+    }
+
+    // Move the insert point to entry of function
+    auto entry_function_block = llvm::BasicBlock::Create(*this->the_context, "", declared_function);
+    this->builder->SetInsertPoint(entry_function_block);
+
+    // Cleanup stuff
+    this->declaring_function_params.clear();
+    this->declaring_function_name.clear();
+}
+
+/**
+ * When the function declaration ends, we simply move to global scope and clear
+ * the list of local variables.
+ */
+void CodeGenerator::function_end()
+{
+    assert(!this->in_global_scope);
+
+    in_global_scope = true;
+    this->local_variables.clear();
+}
+
+/**
  * Immediate will push the immediate argument to the stack.
  */
 void CodeGenerator::immediate(int imm)
