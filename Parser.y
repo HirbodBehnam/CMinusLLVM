@@ -127,9 +127,9 @@ __function_end: { GET_CODEGEN()->function_end(); };
 __pid: { GET_CODEGEN()->pid(yylval.id); } ;
 __pop_expression: { GET_CODEGEN()->pop_expression(); } ;
 __assign: { GET_CODEGEN()->assign(); } ;
-__array: {  } ;
-__calculate: {  } ;
+__array: { GET_CODEGEN()->array(); } ;
+__immediate_val: { GET_CODEGEN()->immediate_val(yylval.num); } ;
 __save_operator: {  } ;
 __negate: {  } ;
-__immediate_val: {  } ;
+__calculate: {  } ;
 %%

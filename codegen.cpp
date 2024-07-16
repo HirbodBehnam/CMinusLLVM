@@ -1,5 +1,7 @@
 #include "codegen.hpp"
 
+#include <llvm/IR/Instructions.h>
+
 #include <array>
 
 CodeGenerator::CodeGenerator() : the_context(std::make_unique<llvm::LLVMContext>()),
@@ -298,11 +300,12 @@ void CodeGenerator::pop_expression()
  *
  * This function is used when the result of an array or a register is used to calculate
  * a right hand side of an expression. For assigning, this task is done in assign itself.
- * 
+ * This function is also handy to get the value of global variables.
+ *
  * One more important thing is that global variables are also pointers. This means that
  * a load instruction will also be generated if you pass a global variable to this function.
  */
-llvm::Value *CodeGenerator::deference_array_if_needed(llvm::Value *value)
+llvm::Value *CodeGenerator::deference_ptr_if_needed(llvm::Value *value)
 {
     auto type = value->getType();
     if (type == llvm::Type::getInt32Ty(*this->the_context))
@@ -325,7 +328,8 @@ llvm::Value *CodeGenerator::deference_array_if_needed(llvm::Value *value)
  *
  * If the destination is a register, we create an Or instruction with zero and the
  * source value and put the result in the destination. If the destination is pointer,
- * we use the store instruction.
+ * we use the store instruction. The later happens in three cases: 1. Global int variable
+ * 2. Pointer to element of local array 3. Pointer to element of global array
  */
 void CodeGenerator::assign()
 {
@@ -335,7 +339,7 @@ void CodeGenerator::assign()
     auto destination = std::get<llvm::Value *>(this->semantic_stack.back());
     this->semantic_stack.pop_back();
     // The source must be in a register
-    llvm::Value *source_in_reg = this->deference_array_if_needed(source);
+    llvm::Value *source_in_reg = this->deference_ptr_if_needed(source);
     // Check what is the type of the destination value
     auto destination_type = destination->getType();
     if (destination_type == llvm::Type::getInt32Ty(*this->the_context))
@@ -361,10 +365,44 @@ void CodeGenerator::assign()
         // 2. Pointer to element of global array
         // 3. Pointer to element of local array
         // In all cases, we can simply omit an store instruction to store the result in the desired location.
-        this->builder->CreateStore(source, destination);
+        this->builder->CreateStore(source_in_reg, destination);
         // Put the result back in the semantic stack.
         this->semantic_stack.push_back(destination);
         return;
     }
     assert(false);
+}
+
+/**
+ * Array is used to find the pointer to the requested element of specific array.
+ * It is called when the top of the semantic stack contains the value of the index
+ * of the array and the next value in the stack contains the pointer to the stack.
+ */
+void CodeGenerator::array()
+{
+    // Get the stuff we need to assign
+    auto index = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    auto ptr = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    assert(ptr->getType() == llvm::Type::getInt32PtrTy(*this->the_context));
+
+    // Get the real index in register
+    llvm::Value *index_in_reg = this->deference_ptr_if_needed(index);
+    // Calculate the offset
+    const std::array index_arr{
+        index_in_reg,
+    };
+    auto offset_ptr = llvm::GetElementPtrInst::CreateInBounds(llvm::Type::getInt32PtrTy(*this->the_context), ptr, llvm::ArrayRef<llvm::Value *>(index_arr), "", this->builder->GetInsertBlock());
+
+    // Push the result in ss
+    this->semantic_stack.push_back(offset_ptr);
+}
+
+/**
+ * Pushes an immediate value in the stack as llvm::Value
+ */
+void CodeGenerator::immediate_val(int num)
+{
+    this->semantic_stack.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context), static_cast<uint64_t>(num), true));
 }

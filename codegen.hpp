@@ -70,7 +70,7 @@ private:
 
     // Function calls
     void generate_prelude();
-    llvm::Value *deference_array_if_needed(llvm::Value *);
+    llvm::Value *deference_ptr_if_needed(llvm::Value *);
 public:
     // Function calls
     explicit CodeGenerator();
@@ -89,4 +89,6 @@ public:
     void immediate(int imm);
     void pop_expression();
     void assign();
+    void array();
+    void immediate_val(int imm);
 };

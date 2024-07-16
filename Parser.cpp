@@ -196,10 +196,10 @@ enum yysymbol_kind_t
   YYSYMBOL___pop_expression = 87,          /* __pop_expression  */
   YYSYMBOL___assign = 88,                  /* __assign  */
   YYSYMBOL___array = 89,                   /* __array  */
-  YYSYMBOL___calculate = 90,               /* __calculate  */
+  YYSYMBOL___immediate_val = 90,           /* __immediate_val  */
   YYSYMBOL___save_operator = 91,           /* __save_operator  */
   YYSYMBOL___negate = 92,                  /* __negate  */
-  YYSYMBOL___immediate_val = 93            /* __immediate_val  */
+  YYSYMBOL___calculate = 93                /* __calculate  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -634,7 +634,7 @@ static const char *const yytname[] =
   "Arg-list", "Arg-list-prime", "__declaring_pid", "__immediate",
   "__int_type", "__void_type", "__function_start", "__function_params_end",
   "__function_end", "__pid", "__pop_expression", "__assign", "__array",
-  "__calculate", "__save_operator", "__negate", "__immediate_val", YY_NULLPTR
+  "__immediate_val", "__save_operator", "__negate", "__calculate", YY_NULLPTR
 };
 
 static const char *
@@ -689,17 +689,17 @@ static const yytype_int8 yydefact[] =
        0,     6,     0,    15,     0,     0,     0,    90,    95,     9,
       20,     0,     0,    17,    22,    96,    19,     0,    14,    92,
       26,    22,    11,     0,    17,     0,    34,     0,     0,     0,
-       0,     0,     0,     0,   104,    97,    28,     0,    26,    27,
+       0,     0,     0,     0,   101,    97,    28,     0,    26,    27,
       29,    30,    31,     0,    42,    52,    59,    66,    73,    21,
       90,    16,    90,     0,     0,    76,    80,    71,    72,     0,
        0,    40,    39,     0,    33,    84,    82,    24,    25,    98,
      102,   102,    49,     0,   102,   102,    57,     0,   102,    64,
       20,     0,    83,     0,     0,    86,    75,    78,     0,     0,
       41,     0,    86,     0,    43,    46,    52,    59,    66,    70,
-      32,    53,    54,     0,     0,   101,    59,    66,    69,    60,
-      61,   101,     0,    18,    23,    74,     0,    89,     0,    85,
+      32,    53,    54,     0,     0,   104,    59,    66,    69,    60,
+      61,   104,     0,    18,    23,    74,     0,    89,     0,    85,
        0,     0,     0,     0,    99,    50,    56,    63,    67,   103,
-      51,    55,    62,    59,   101,    79,     0,    87,    77,     0,
+      51,    55,    62,    59,   104,    79,     0,    87,    77,     0,
        0,   100,    81,    44,    68,    58,    66,    89,     0,    36,
       35,     0,    66,    65,    88,     0,     0,     0,    45,    59,
       37,     0,    99,    52,    38,    47,    48
@@ -714,7 +714,7 @@ static const yytype_int16 yypgoto[] =
     -132,  -132,  -132,  -132,  -110,  -132,    34,  -132,  -132,  -112,
        1,  -132,  -132,   -46,  -132,  -132,  -132,  -132,    24,  -132,
      -35,   -23,  -132,   100,  -132,  -132,  -132,  -132,  -132,  -132,
-     -48,  -132,  -123,   -39,  -132,  -132
+     -48,  -132,  -132,   -39,  -132,  -123
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -726,7 +726,7 @@ static const yytype_uint8 yydefgoto[] =
       93,   125,   116,    65,    96,    97,   126,   117,    66,    99,
      127,   118,    67,   128,   106,   107,   119,    68,   138,   139,
      157,    21,    22,     9,     8,    17,    31,    42,    86,   120,
-     163,   172,   150,   121,   164,    85
+     163,   172,    85,   121,   164,   150
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -780,15 +780,15 @@ static const yytype_int8 yystos[] =
       18,    22,    23,    25,    26,    27,    43,    44,    45,    46,
       47,    49,    50,    52,    55,    61,    66,    70,    75,    41,
       27,    38,    27,    52,     8,    26,    27,    71,    71,     8,
-       8,     3,    51,    52,     3,    93,    86,    11,    44,     3,
+       8,     3,    51,    52,     3,    90,    86,    11,    44,     3,
       16,    17,    57,    58,    12,    13,    62,    63,    14,    67,
       79,    79,     9,    52,     6,     8,    72,    73,    52,    52,
        3,     6,     8,    15,    53,    56,    60,    65,    69,    74,
       87,    91,    91,    12,    13,    59,    64,    68,    71,    91,
       91,    64,    91,    40,    34,     9,    52,    52,    76,    77,
        9,     3,    52,    76,    52,    57,    62,    67,    71,    71,
-      90,    62,    67,    90,    68,     7,     5,    78,     9,    45,
-      52,     7,     9,    88,    92,    62,    90,    52,    19,    24,
+      93,    62,    67,    93,    68,     7,     5,    78,     9,    45,
+      52,     7,     9,    88,    92,    62,    93,    52,    19,    24,
       48,     3,    89,    67,    78,    45,    52,    15,    54,    67,
       24,     9,    52,    62,    45,    88,    57
 };
@@ -1379,13 +1379,13 @@ yyreduce:
 
   case 100: /* __array: %empty  */
 #line 130 "Parser.y"
-         {  }
+         { GET_CODEGEN()->array(); }
 #line 1384 "Parser.cpp"
     break;
 
-  case 101: /* __calculate: %empty  */
+  case 101: /* __immediate_val: %empty  */
 #line 131 "Parser.y"
-             {  }
+                 { GET_CODEGEN()->immediate_val(yylval.num); }
 #line 1390 "Parser.cpp"
     break;
 
@@ -1401,9 +1401,9 @@ yyreduce:
 #line 1402 "Parser.cpp"
     break;
 
-  case 104: /* __immediate_val: %empty  */
+  case 104: /* __calculate: %empty  */
 #line 134 "Parser.y"
-                 {  }
+             {  }
 #line 1408 "Parser.cpp"
     break;
 
