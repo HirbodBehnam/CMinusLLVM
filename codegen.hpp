@@ -72,7 +72,7 @@ private:
 
     // Function calls
     void generate_prelude();
-    llvm::Value *deference_ptr_if_needed(llvm::Value *);
+    llvm::Value *dereference_ptr_if_needed(llvm::Value *);
 public:
 
     // Function calls

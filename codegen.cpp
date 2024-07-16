@@ -316,7 +316,7 @@ void CodeGenerator::pop_expression()
  * One more important thing is that global variables are also pointers. This means that
  * a load instruction will also be generated if you pass a global variable to this function.
  */
-llvm::Value *CodeGenerator::deference_ptr_if_needed(llvm::Value *value)
+llvm::Value *CodeGenerator::dereference_ptr_if_needed(llvm::Value *value)
 {
     auto type = value->getType();
     if (type == llvm::Type::getInt32Ty(*this->the_context))
@@ -350,7 +350,7 @@ void CodeGenerator::assign()
     auto destination = std::get<llvm::Value *>(this->semantic_stack.back());
     this->semantic_stack.pop_back();
     // The source must be in a register
-    llvm::Value *source_in_reg = this->deference_ptr_if_needed(source);
+    llvm::Value *source_in_reg = this->dereference_ptr_if_needed(source);
     // Check what is the type of the destination value
     auto destination_type = destination->getType();
     if (destination_type == llvm::Type::getInt32Ty(*this->the_context))
@@ -399,7 +399,7 @@ void CodeGenerator::array()
     assert(ptr->getType() == llvm::Type::getInt32PtrTy(*this->the_context));
 
     // Get the real index in register
-    llvm::Value *index_in_reg = this->deference_ptr_if_needed(index);
+    llvm::Value *index_in_reg = this->dereference_ptr_if_needed(index);
     // Calculate the offset
     const std::array index_arr{
         index_in_reg,
@@ -441,7 +441,7 @@ void CodeGenerator::negate()
     this->semantic_stack.pop_back();
 
     // Generate code to negate it
-    llvm::Value *value_in_reg = this->deference_ptr_if_needed(value);
+    llvm::Value *value_in_reg = this->dereference_ptr_if_needed(value);
     auto result = this->builder->CreateNeg(value_in_reg);
 
     // Insert the result back in the semantic stack
@@ -466,8 +466,8 @@ void CodeGenerator::calculate()
     this->operator_stack.pop_back();
 
     // Dereference pointers
-    operand1 = this->deference_ptr_if_needed(operand1);
-    operand2 = this->deference_ptr_if_needed(operand2);
+    operand1 = this->dereference_ptr_if_needed(operand1);
+    operand2 = this->dereference_ptr_if_needed(operand2);
 
     // Check what we should do
     llvm::Value *result;
@@ -519,7 +519,8 @@ void CodeGenerator::call()
     std::vector<llvm::Value *> arguments_reversed;
     while (std::holds_alternative<llvm::Value *>(this->semantic_stack.back()))
     {
-        arguments_reversed.push_back(std::get<llvm::Value *>(this->semantic_stack.back()));
+        auto value = std::get<llvm::Value *>(this->semantic_stack.back());
+        arguments_reversed.push_back(this->dereference_ptr_if_needed(value));
         this->semantic_stack.pop_back();
     }
     std::reverse(arguments_reversed.begin(), arguments_reversed.end());
