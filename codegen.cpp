@@ -111,6 +111,7 @@ void CodeGenerator::variable_declared()
         // Check if a previous local variable is declared using the name
         assert(this->local_variables.count(this->declaring_pid_name) == 0);
         // Create an add instruction with zero operands to assign a new variable
+        // TODO: push an constant llvm::Value* to SS
         auto created_value = this->builder->CreateOr(zero, zero, this->declaring_pid_name);
         this->local_variables.emplace(std::move(this->declaring_pid_name), created_value);
     }
@@ -255,4 +256,101 @@ void CodeGenerator::function_end()
 void CodeGenerator::immediate(int imm)
 {
     this->semantic_stack.push_back(imm);
+}
+
+/**
+ * pid will search the name in the local scope and then the global scope
+ * and then push the value of it in the semnatic stack.
+ *
+ * If the variable is not found, the program aborts.
+ */
+void CodeGenerator::pid(const char *pid)
+{
+    const std::string pid_string(pid);
+    // Look in local scope
+    auto local_variable = this->local_variables.find(pid_string);
+    if (local_variable != this->local_variables.end())
+    {
+        this->semantic_stack.push_back(local_variable->second);
+        return;
+    }
+    // Look in global scope
+    auto global_variable = this->the_module->getNamedGlobal(pid_string);
+    assert(global_variable); // Shash
+    // Load the global variable in a register
+    // TODO: what about global arrays?
+    auto global_variable_as_reg = this->builder->CreateLoad(global_variable->getType(), global_variable);
+    this->semantic_stack.push_back(global_variable_as_reg);
+}
+
+/**
+ * Pops the result of an expression from stack.
+ */
+void CodeGenerator::pop_expression()
+{
+    // Works like an assertion
+    std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+}
+
+/**
+ * This function will receive an value which is either a pointer to data or a register
+ * (i32). If the input is a register, it will simply return the input. Otherwise, a
+ * load instruction is inserted and the result is returned. This means that the output
+ * of this function is always an i32 value in a register.
+ *
+ * This function is used when the result of an array or a register is used to calculate
+ * a right hand side of an expression. For assigning, this task is done in assign itself.
+ */
+llvm::Value *CodeGenerator::deference_array_if_needed(llvm::Value *value)
+{
+    auto type = value->getType();
+    if (type == llvm::Type::getInt32Ty(*this->the_context))
+        return value;
+    if (type == llvm::Type::getInt32PtrTy(*this->the_context))
+    {
+        // Generate a load instruction to load the data in a register
+        return this->builder->CreateLoad(llvm::Type::getInt32Ty(*this->the_context), value);
+    }
+    assert(false);
+}
+
+/**
+ * When assign is called, the top of the stack is the source and the next
+ * variable in the stack is the destination.
+ *
+ * To assign, however, we should consider that the destination and source MIGHT be
+ * array references. In this case, we should do pointer stuff such as using load
+ * and store instructions.
+ *
+ * If the destination is a register, we create an Or instruction with zero and the
+ * source value and put the result in the destination. If the destination is pointer,
+ * we use the store instruction.
+ */
+void CodeGenerator::assign()
+{
+    // Get the stuff we need to assign
+    auto source = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    auto destination = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    // The source must be in a register
+    llvm::Value *source_in_reg = this->deference_array_if_needed(source);
+    // Check what is the type of the destination value
+    auto destination_type = destination->getType();
+    if (destination_type == llvm::Type::getInt32Ty(*this->the_context)) {
+        auto result = this->builder->CreateOr(source_in_reg, static_cast<uint64_t>(0));
+        result->takeName(destination); // transfer the name for replacing the value later
+        this->semantic_stack.push_back(result);
+        // TODO: check if local variable
+        auto local_variable = this->local_variables.find(result->getName().str());
+        if (local_variable != this->local_variables.end())
+            local_variable->second = result;
+        return;
+    }
+    if (destination_type == llvm::Type::getInt32PtrTy(*this->the_context))
+    {
+        assert(false);
+    }
+    assert(false);
 }

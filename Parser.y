@@ -77,36 +77,42 @@ Local-Declaration: INTSYM __int_type ID __declaring_pid Var-declaration-prime ;
 Compound-stmt: LCURVBRACES Local-Declaration-list Statement-list RCURVBRACES ;
 Statement-list: Statement Statement-list | ;
 Statement: Expression-stmt | Compound-stmt | Selection-stmt | Iteration-stmt | Return-stmt ;
-Expression-stmt: Expression SEMICOLON | BREAKSYM SEMICOLON | SEMICOLON ;
+Expression-stmt: Expression SEMICOLON __pop_expression
+               | BREAKSYM SEMICOLON
+               | SEMICOLON ;
 Selection-stmt: IFSYM LPAREN Expression RPAREN Statement Else-stmt ;
 Else-stmt: ENDIFSYM | ELSESYM Statement ENDIFSYM ;
 Iteration-stmt: FORSYM LPAREN Expression SEMICOLON Expression SEMICOLON Expression RPAREN Statement ;
 Return-stmt: RETURNSYM Return-stmt-prime ;
 Return-stmt-prime: SEMICOLON | Expression SEMICOLON ;
-Expression: Simple-expression-zegond | ID B ;
-B: EQL Expression | LBRACES Expression RBRACES H | Simple-expression-prime ;
-H: EQL Expression | G D C ;
+Expression: Simple-expression-zegond | ID __pid B ;
+B: EQL Expression __assign
+ | LBRACES Expression RBRACES __array H
+ | Simple-expression-prime
+ ;
+H: EQL Expression __assign
+ | G D C ;
 Simple-expression-zegond: Additive-expression-zegond C ;
 Simple-expression-prime: Additive-expression-prime C ;
-C: Relop Additive-expression | ;
-Relop: LSS | DOUBLE_EQ ;
+C: Relop Additive-expression __calculate | ;
+Relop: LSS __save_operator | DOUBLE_EQ __save_operator ;
 Additive-expression: Term D ;
 Additive-expression-prime: Term-prime D ;
 Additive-expression-zegond: Term-zegond D ;
-D: Addop Term D | ;
-Addop: PLUS | MINUS ;
+D: Addop Term __calculate D | ;
+Addop: PLUS __save_operator | MINUS __save_operator ;
 Term: Signed-factor G ;
 Term-prime: Signed-factor-prime G ;
 Term-zegond: Signed-factor-zegond G ;
-G: TIMES Signed-factor G | ;
-Signed-factor: PLUS Factor | MINUS Factor | Factor ;
+G: TIMES __save_operator Signed-factor __calculate G | ;
+Signed-factor: PLUS Factor | MINUS Factor __negate | Factor ;
 Signed-factor-prime: Factor-prime ;
 Signed-factor-zegond: PLUS Factor | MINUS Factor | Factor-zegond ;
 Factor: LPAREN Expression RPAREN | ID Var-call-prime | NUM ;
 Var-call-prime: LPAREN Args RPAREN | Var-prime ;
 Var-prime: LBRACES Expression RBRACES | ;
 Factor-prime: LPAREN Args RPAREN | ;
-Factor-zegond: LPAREN Expression RPAREN | NUM ;
+Factor-zegond: LPAREN Expression RPAREN | NUM __immediate_val ;
 Args: Arg-list | ;
 Arg-list: Expression Arg-list-prime ;
 Arg-list-prime: COMMA Expression Arg-list-prime | ;
@@ -118,4 +124,12 @@ __void_type: { GET_CODEGEN()->void_type(); } ;
 __function_start: { GET_CODEGEN()->function_start(); } ;
 __function_params_end: { GET_CODEGEN()->function_params_end(); } ;
 __function_end: { GET_CODEGEN()->function_end(); };
+__pid: { GET_CODEGEN()->pid(yylval.id); } ;
+__pop_expression: { GET_CODEGEN()->pop_expression(); } ;
+__assign: { GET_CODEGEN()->assign(); } ;
+__array: {  } ;
+__calculate: {  } ;
+__save_operator: {  } ;
+__negate: {  } ;
+__immediate_val: {  } ;
 %%
