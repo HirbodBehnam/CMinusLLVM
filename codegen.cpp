@@ -210,7 +210,7 @@ void CodeGenerator::function_params_end()
     assert(this->declaring_pid_name.empty());
     assert(!this->declaring_function_name.empty());
     auto return_type = std::get<CodeGenerator::VariableType>(this->semantic_stack.back());
-    this->semantic_stack.pop_back();
+    // We dont pop the return type now. We still need it in the function_end for implicit return
 
     // Generate a list of argument types
     std::vector<llvm::Type *> param_types;
@@ -247,9 +247,13 @@ void CodeGenerator::function_params_end()
 void CodeGenerator::function_end()
 {
     assert(!this->in_global_scope);
+    auto return_type = std::get<CodeGenerator::VariableType>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
 
     in_global_scope = true;
     this->local_variables.clear();
+    if (return_type == CodeGenerator::VariableType::VOID)
+        this->builder->CreateRet(nullptr); // create an implicit ret void
 }
 
 /**

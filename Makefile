@@ -13,3 +13,6 @@ Parser.cpp: Parser.y Lexer.cpp
 
 clean:
 	rm -f *.o *~ Lexer.cpp Lexer.hpp Parser.cpp Parser.hpp compiler
+
+test: all
+	@echo test
