@@ -84,7 +84,9 @@ Selection-stmt: IFSYM LPAREN Expression RPAREN Statement Else-stmt ;
 Else-stmt: ENDIFSYM | ELSESYM Statement ENDIFSYM ;
 Iteration-stmt: FORSYM LPAREN Expression SEMICOLON Expression SEMICOLON Expression RPAREN Statement ;
 Return-stmt: RETURNSYM Return-stmt-prime ;
-Return-stmt-prime: SEMICOLON | Expression SEMICOLON ;
+Return-stmt-prime: SEMICOLON            { GET_CODEGEN()->insert_return(true); }
+                 | Expression SEMICOLON { GET_CODEGEN()->insert_return(false); }
+                 ;
 Expression: Simple-expression-zegond | ID __pid B ;
 B: EQL Expression __assign
  | LBRACES Expression RBRACES __array H
@@ -108,10 +110,10 @@ G: __save_operator TIMES Signed-factor __calculate G | ;
 Signed-factor: PLUS Factor | MINUS Factor __negate | Factor ;
 Signed-factor-prime: Factor-prime ;
 Signed-factor-zegond: PLUS Factor | MINUS Factor | Factor-zegond ;
-Factor: LPAREN Expression RPAREN | ID Var-call-prime | NUM __immediate_val ;
-Var-call-prime: LPAREN Args RPAREN | Var-prime ;
-Var-prime: LBRACES Expression RBRACES | ;
-Factor-prime: LPAREN Args RPAREN | ;
+Factor: LPAREN Expression RPAREN | ID __pid Var-call-prime | NUM __immediate_val ;
+Var-call-prime: LPAREN Args RPAREN __call | Var-prime ;
+Var-prime: LBRACES Expression RBRACES __array | ;
+Factor-prime: LPAREN Args RPAREN __call | ;
 Factor-zegond: LPAREN Expression RPAREN | NUM __immediate_val ;
 Args: Arg-list | ;
 Arg-list: Expression Arg-list-prime ;
@@ -132,4 +134,5 @@ __immediate_val: { GET_CODEGEN()->immediate_val(yylval.num); } ;
 __save_operator: { GET_CODEGEN()->save_operator(static_cast<CodeGenerator::Operator>(yychar)); } ;
 __negate: { GET_CODEGEN()->negate(); } ;
 __calculate: { GET_CODEGEN()->calculate(); } ;
+__call: { GET_CODEGEN()->call(); } ;
 %%

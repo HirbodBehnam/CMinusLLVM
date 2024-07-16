@@ -221,7 +221,7 @@ void CodeGenerator::function_params_end()
     llvm::Type *llvm_return_type = return_type == CodeGenerator::VariableType::VOID ? llvm::Type::getVoidTy(*this->the_context) : llvm::Type::getInt32Ty(*this->the_context);
     // Generate the function
     auto function_type = llvm::FunctionType::get(llvm_return_type, llvm::ArrayRef(param_types), false);
-    auto declared_function = llvm::Function::Create(function_type, llvm::GlobalValue::LinkageTypes::PrivateLinkage, this->declaring_function_name, this->the_module.get());
+    auto declared_function = llvm::Function::Create(function_type, llvm::GlobalValue::LinkageTypes::ExternalLinkage, this->declaring_function_name, this->the_module.get());
     for (size_t i = 0; i < this->declaring_function_params.size(); i++)
     {
         auto argument = declared_function->getArg(i);
@@ -278,8 +278,15 @@ void CodeGenerator::pid(const char *pid)
     }
     // Look in global scope
     auto global_variable = this->the_module->getNamedGlobal(pid_string);
-    assert(global_variable); // Shash
-    this->semantic_stack.push_back(global_variable);
+    if (global_variable != nullptr)
+    {
+        this->semantic_stack.push_back(global_variable);
+        return;
+    }
+    // Is this a function?
+    auto function_call = this->the_module->getFunction(pid_string);
+    assert(function_call);
+    this->semantic_stack.push_back(function_call);
 }
 
 /**
@@ -393,7 +400,11 @@ void CodeGenerator::array()
     const std::array index_arr{
         index_in_reg,
     };
-    auto offset_ptr = llvm::GetElementPtrInst::CreateInBounds(llvm::Type::getInt32PtrTy(*this->the_context), ptr, llvm::ArrayRef<llvm::Value *>(index_arr), "", this->builder->GetInsertBlock());
+    auto offset_ptr = llvm::GetElementPtrInst::CreateInBounds(
+        llvm::Type::getInt32Ty(*this->the_context),
+        ptr, llvm::ArrayRef<llvm::Value *>(index_arr),
+        "",
+        this->builder->GetInsertBlock());
 
     // Push the result in ss
     this->semantic_stack.push_back(offset_ptr);
@@ -419,7 +430,8 @@ void CodeGenerator::save_operator(CodeGenerator::Operator op)
  * Negate will get the top of the semantic stack, generate a code to negate it,
  * and then put the result back in the semantic stack.
  */
-void CodeGenerator::negate() {
+void CodeGenerator::negate()
+{
     // Get the value
     auto value = std::get<llvm::Value *>(this->semantic_stack.back());
     this->semantic_stack.pop_back();
@@ -427,7 +439,7 @@ void CodeGenerator::negate() {
     // Generate code to negate it
     llvm::Value *value_in_reg = this->deference_ptr_if_needed(value);
     auto result = this->builder->CreateNeg(value_in_reg);
-    
+
     // Insert the result back in the semantic stack
     this->semantic_stack.push_back(result);
 }
@@ -439,7 +451,8 @@ void CodeGenerator::negate() {
  * input code. The result of the calculation is pushed back on the semantic stack. It is
  * always a register (temporary) in the local scope.
  */
-void CodeGenerator::calculate() {
+void CodeGenerator::calculate()
+{
     // Get the variables needed
     auto operand2 = std::get<llvm::Value *>(this->semantic_stack.back());
     this->semantic_stack.pop_back();
@@ -468,14 +481,12 @@ void CodeGenerator::calculate() {
     case CodeGenerator::Operator::LESS_THAN:
         result = this->builder->CreateZExt(
             this->builder->CreateICmpSLT(operand1, operand2),
-            llvm::Type::getInt32Ty(*this->the_context)
-        );
+            llvm::Type::getInt32Ty(*this->the_context));
         break;
     case CodeGenerator::Operator::EQUALS:
         result = this->builder->CreateZExt(
             this->builder->CreateICmpEQ(operand1, operand2),
-            llvm::Type::getInt32Ty(*this->the_context)
-        );
+            llvm::Type::getInt32Ty(*this->the_context));
         break;
     default:
         assert(false);
@@ -483,4 +494,51 @@ void CodeGenerator::calculate() {
 
     // Put the result back in the stack
     this->semantic_stack.push_back(result);
+}
+
+/**
+ * Call is called just after the argument declaration of a function call.
+ * At this point, the semantic stack contains some llvm::Values and then a llvm::Function
+ * which is the function we should call. Our strategy is popping from the stack and storing the
+ * arguments (llvm::Value *) in an array until we reach the llvm::Function. At this
+ * point we can insert the call instruction and jump to the function.
+ *
+ * It's also worth noting that the result of the function is stored in the semantic stack.
+ * If the function is void, we will push a zero into the stack because it will be popped
+ * after the expression is finished. This however, will create some bugs if you assign
+ * the result of a void function to a variable which results in that variable be assigned zero.
+ * This behaviour should be later be reported in the semantic analyzer.
+ */
+void CodeGenerator::call()
+{
+    // Get the list of arguments
+    std::vector<llvm::Value *> arguments_reversed;
+    while (std::holds_alternative<llvm::Value *>(this->semantic_stack.back()))
+    {
+        arguments_reversed.push_back(std::get<llvm::Value *>(this->semantic_stack.back()));
+        this->semantic_stack.pop_back();
+    }
+    std::reverse(arguments_reversed.begin(), arguments_reversed.end());
+    // The next value should be the function
+    auto function_to_call = std::get<llvm::Function *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    // Just create the call instruction
+    auto returned_value = this->builder->CreateCall(function_to_call, llvm::ArrayRef(arguments_reversed));
+    if (returned_value->getType() == llvm::Type::getVoidTy(*this->the_context)) // if void, push zero
+        this->semantic_stack.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context), static_cast<uint64_t>(0), true));
+    else
+        this->semantic_stack.push_back(returned_value);
+}
+
+/**
+ * This function will simply generate a return instruction.
+ *
+ * If the is_void parameter is true, it will emit a 'ret void' instruction.
+ * Otherwise, the top of the semantic stack is returned as the return value.
+ */
+void CodeGenerator::insert_return(bool is_void)
+{
+    this->builder->CreateRet(is_void ? nullptr : std::get<llvm::Value *>(this->semantic_stack.back()));
+    if (!is_void)
+        this->semantic_stack.pop_back();
 }

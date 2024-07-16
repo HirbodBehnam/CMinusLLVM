@@ -60,7 +60,7 @@ private:
         INT,
     };
     // Types which can be pushed in the semantic stack
-    typedef std::variant<llvm::Value *, CodeGenerator::VariableType, int> SemanticStaticObject;
+    typedef std::variant<llvm::Value *, llvm::Function *, CodeGenerator::VariableType, int> SemanticStaticObject;
     // The good old semantic stack
     std::vector<SemanticStaticObject> semantic_stack;
     // Name of the variable/function we are declaring
@@ -97,4 +97,6 @@ public:
     void save_operator(CodeGenerator::Operator);
     void negate();
     void calculate();
+    void call();
+    void insert_return(bool is_void);
 };
