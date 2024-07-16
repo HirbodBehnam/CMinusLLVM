@@ -277,10 +277,7 @@ void CodeGenerator::pid(const char *pid)
     // Look in global scope
     auto global_variable = this->the_module->getNamedGlobal(pid_string);
     assert(global_variable); // Shash
-    // Load the global variable in a register
-    // TODO: what about global arrays?
-    auto global_variable_as_reg = this->builder->CreateLoad(global_variable->getType(), global_variable);
-    this->semantic_stack.push_back(global_variable_as_reg);
+    this->semantic_stack.push_back(global_variable);
 }
 
 /**
@@ -301,6 +298,9 @@ void CodeGenerator::pop_expression()
  *
  * This function is used when the result of an array or a register is used to calculate
  * a right hand side of an expression. For assigning, this task is done in assign itself.
+ * 
+ * One more important thing is that global variables are also pointers. This means that
+ * a load instruction will also be generated if you pass a global variable to this function.
  */
 llvm::Value *CodeGenerator::deference_array_if_needed(llvm::Value *value)
 {
@@ -338,19 +338,33 @@ void CodeGenerator::assign()
     llvm::Value *source_in_reg = this->deference_array_if_needed(source);
     // Check what is the type of the destination value
     auto destination_type = destination->getType();
-    if (destination_type == llvm::Type::getInt32Ty(*this->the_context)) {
+    if (destination_type == llvm::Type::getInt32Ty(*this->the_context))
+    {
+        // Check if this is local variable.
+        auto local_variable = this->local_variables.find(destination->getName().str());
+        assert(local_variable != this->local_variables.end()); // this must be a local variable
+        // With an or instruction assign to a new variable
         auto result = this->builder->CreateOr(source_in_reg, static_cast<uint64_t>(0));
-        result->takeName(destination); // transfer the name for replacing the value later
+        // Transfer the name for replacing the value later.
+        // This is needed to later be able to search in the local variables map.
+        result->takeName(destination);
+        // Put the result back in the semantic stack.
         this->semantic_stack.push_back(result);
-        // TODO: check if local variable
-        auto local_variable = this->local_variables.find(result->getName().str());
-        if (local_variable != this->local_variables.end())
-            local_variable->second = result;
+        // The variable must be pointed to the new value.
+        local_variable->second = result;
         return;
     }
     if (destination_type == llvm::Type::getInt32PtrTy(*this->the_context))
     {
-        assert(false);
+        // In three ways we can reach this block. Either this variable is
+        // 1. Global Integer
+        // 2. Pointer to element of global array
+        // 3. Pointer to element of local array
+        // In all cases, we can simply omit an store instruction to store the result in the desired location.
+        this->builder->CreateStore(source, destination);
+        // Put the result back in the semantic stack.
+        this->semantic_stack.push_back(destination);
+        return;
     }
     assert(false);
 }
