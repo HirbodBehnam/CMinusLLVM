@@ -406,3 +406,81 @@ void CodeGenerator::immediate_val(int num)
 {
     this->semantic_stack.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context), static_cast<uint64_t>(num), true));
 }
+
+/**
+ * This function will simply store an operator in the operator stack.
+ */
+void CodeGenerator::save_operator(CodeGenerator::Operator op)
+{
+    this->operator_stack.push_back(op);
+}
+
+/**
+ * Negate will get the top of the semantic stack, generate a code to negate it,
+ * and then put the result back in the semantic stack.
+ */
+void CodeGenerator::negate() {
+    // Get the value
+    auto value = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+
+    // Generate code to negate it
+    llvm::Value *value_in_reg = this->deference_ptr_if_needed(value);
+    auto result = this->builder->CreateNeg(value_in_reg);
+    
+    // Insert the result back in the semantic stack
+    this->semantic_stack.push_back(result);
+}
+
+/**
+ * Calculate will generate code to do the arithmetic based on the two top values in the stack
+ * and the top value in the operator stack. It will pop the two values from the top of the
+ * semantic stack, dereference them if needed, and does the calculation based on the
+ * input code. The result of the calculation is pushed back on the semantic stack. It is
+ * always a register (temporary) in the local scope.
+ */
+void CodeGenerator::calculate() {
+    // Get the variables needed
+    auto operand2 = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    auto operand1 = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    auto op = this->operator_stack.back();
+    this->operator_stack.pop_back();
+
+    // Dereference pointers
+    operand1 = this->deference_ptr_if_needed(operand1);
+    operand2 = this->deference_ptr_if_needed(operand2);
+
+    // Check what we should do
+    llvm::Value *result;
+    switch (op)
+    {
+    case CodeGenerator::Operator::PLUS:
+        result = this->builder->CreateAdd(operand1, operand2);
+        break;
+    case CodeGenerator::Operator::MINUS:
+        result = this->builder->CreateSub(operand1, operand2);
+        break;
+    case CodeGenerator::Operator::MULT:
+        result = this->builder->CreateMul(operand1, operand2);
+        break;
+    case CodeGenerator::Operator::LESS_THAN:
+        result = this->builder->CreateZExt(
+            this->builder->CreateICmpSLT(operand1, operand2),
+            llvm::Type::getInt32Ty(*this->the_context)
+        );
+        break;
+    case CodeGenerator::Operator::EQUALS:
+        result = this->builder->CreateZExt(
+            this->builder->CreateICmpEQ(operand1, operand2),
+            llvm::Type::getInt32Ty(*this->the_context)
+        );
+        break;
+    default:
+        assert(false);
+    }
+
+    // Put the result back in the stack
+    this->semantic_stack.push_back(result);
+}

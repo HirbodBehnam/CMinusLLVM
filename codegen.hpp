@@ -34,6 +34,15 @@ struct DeclaringFunctionParameterData
 
 class CodeGenerator
 {
+public:
+    // Different types of arithmetic operators of the language
+    enum class Operator { 
+        PLUS = PLUS,
+        MINUS = MINUS,
+        MULT = TIMES,
+        LESS_THAN = LSS,
+        EQUALS = DOUBLE_EQ,
+    };
 private:
     // LLVM codegen variables
     std::unique_ptr<llvm::LLVMContext> the_context;
@@ -43,14 +52,7 @@ private:
     // List of declared variables in current scope
     std::unordered_map<std::string, llvm::Value *> local_variables;
 
-    // Different types of operators of the language
-    enum class Operator { 
-        PLUS,
-        MINUS,
-        MULT,
-        LESS_THAN,
-        EQUALS,
-    };
+    // A list of operators which should be applied to values in semantic stack later
     std::vector<CodeGenerator::Operator> operator_stack;
     // Each variable or function is either int or void
     enum class VariableType {
@@ -72,6 +74,7 @@ private:
     void generate_prelude();
     llvm::Value *deference_ptr_if_needed(llvm::Value *);
 public:
+
     // Function calls
     explicit CodeGenerator();
     void print_code();
@@ -85,10 +88,13 @@ public:
     void int_param();
     void function_params_end();
     void function_end();
-    void pid(const char *pid);
-    void immediate(int imm);
+    void pid(const char *);
+    void immediate(int);
     void pop_expression();
     void assign();
     void array();
-    void immediate_val(int imm);
+    void immediate_val(int);
+    void save_operator(CodeGenerator::Operator);
+    void negate();
+    void calculate();
 };
