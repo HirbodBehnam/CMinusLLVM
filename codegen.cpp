@@ -516,19 +516,26 @@ void CodeGenerator::calculate()
 void CodeGenerator::call()
 {
     // Get the list of arguments
-    std::vector<llvm::Value *> arguments_reversed;
+    std::vector<llvm::Value *> arguments;
     while (std::holds_alternative<llvm::Value *>(this->semantic_stack.back()))
     {
-        auto value = std::get<llvm::Value *>(this->semantic_stack.back());
-        arguments_reversed.push_back(this->dereference_ptr_if_needed(value));
+        arguments.push_back(std::get<llvm::Value *>(this->semantic_stack.back()));
         this->semantic_stack.pop_back();
     }
-    std::reverse(arguments_reversed.begin(), arguments_reversed.end());
+    std::reverse(arguments.begin(), arguments.end());
     // The next value should be the function
     auto function_to_call = std::get<llvm::Function *>(this->semantic_stack.back());
     this->semantic_stack.pop_back();
+    // Fix the arguments if needed (dereference pointers)
+    assert(arguments.size() == function_to_call->arg_size());
+    int arg_count = 0;
+    for (auto const &argument : function_to_call->args()) {
+        if (argument.getType() == llvm::Type::getInt32Ty(*this->the_context)) // if this is an int, dereference it
+            arguments[arg_count] = this->dereference_ptr_if_needed(arguments[arg_count]);
+        arg_count++;
+    }
     // Just create the call instruction
-    auto returned_value = this->builder->CreateCall(function_to_call, llvm::ArrayRef(arguments_reversed));
+    auto returned_value = this->builder->CreateCall(function_to_call, llvm::ArrayRef(arguments));
     if (returned_value->getType() == llvm::Type::getVoidTy(*this->the_context)) // if void, push zero
         this->semantic_stack.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context), static_cast<uint64_t>(0), true));
     else
