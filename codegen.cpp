@@ -83,7 +83,6 @@ void CodeGenerator::int_type()
 void CodeGenerator::declaring_pid(const char *pid)
 {
     this->declaring_pid_name = pid;
-    // TODO: check if variable was defined before
 }
 
 /**
@@ -112,10 +111,10 @@ void CodeGenerator::variable_declared()
     {
         // Check if a previous local variable is declared using the name
         assert(this->local_variables.count(this->declaring_pid_name) == 0);
-        // Create an add instruction with zero operands to assign a new variable
-        // TODO: push an constant llvm::Value* to SS
-        auto created_value = this->builder->CreateOr(zero, zero, this->declaring_pid_name);
-        this->local_variables.emplace(std::move(this->declaring_pid_name), created_value);
+        // Create the local variable as a zero sized array
+        auto one_value = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context), 1, true);
+        auto alloca = this->builder->CreateAlloca(llvm::Type::getInt32Ty(*this->the_context), one_value, this->declaring_pid_name);
+        this->local_variables.emplace(std::move(this->declaring_pid_name), alloca);
     }
     this->declaring_pid_name.clear();
 }
@@ -222,18 +221,35 @@ void CodeGenerator::function_params_end()
     // Generate the function
     auto function_type = llvm::FunctionType::get(llvm_return_type, llvm::ArrayRef(param_types), false);
     auto declared_function = llvm::Function::Create(function_type, llvm::GlobalValue::LinkageTypes::ExternalLinkage, this->declaring_function_name, this->the_module.get());
-    for (size_t i = 0; i < this->declaring_function_params.size(); i++)
-    {
-        auto argument = declared_function->getArg(i);
-        argument->setName(this->declaring_function_params.at(i).name);
-
-        // Insert into local parameters map
-        this->local_variables.emplace(std::move(this->declaring_function_params.at(i).name), argument);
-    }
 
     // Move the insert point to entry of function
     auto entry_function_block = llvm::BasicBlock::Create(*this->the_context, "", declared_function);
     this->builder->SetInsertPoint(entry_function_block);
+
+    // At the very first of the function declare the arguments as local variables
+    auto one_value = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context), 1, true);
+    for (size_t i = 0; i < this->declaring_function_params.size(); i++)
+    {
+        auto argument = declared_function->getArg(i);
+        // If this value is an int, then we put it in a stack variable and work with that
+        if (argument->getType() == llvm::Type::getInt32Ty(*this->the_context))
+        {
+            // Create a alloc for each argument to store the param in stack
+            auto alloca = this->builder->CreateAlloca(argument->getType(), one_value, this->declaring_function_params.at(i).name);
+            // Create an instruction to store the argument in the memory
+            this->builder->CreateStore(argument, alloca);
+            // Insert into local parameters map
+            this->local_variables.emplace(std::move(this->declaring_function_params.at(i).name), alloca);
+        }
+        else
+        {
+            // Otherwise, we don't store the pointer in the stack variable. Instead, because pointers
+            // are immutable in this language, we simply use the value of the argument.
+            assert(argument->getType() == llvm::Type::getInt32PtrTy(*this->the_context));
+            argument->setName(this->declaring_function_params.at(i).name);
+            this->local_variables.emplace(std::move(this->declaring_function_params.at(i).name), argument);
+        }
+    }
 
     // Cleanup stuff
     this->declaring_function_params.clear();
@@ -351,37 +367,12 @@ void CodeGenerator::assign()
     this->semantic_stack.pop_back();
     // The source must be in a register
     llvm::Value *source_in_reg = this->dereference_ptr_if_needed(source);
-    // Check what is the type of the destination value
-    auto destination_type = destination->getType();
-    if (destination_type == llvm::Type::getInt32Ty(*this->the_context))
-    {
-        // Check if this is local variable.
-        auto local_variable = this->local_variables.find(destination->getName().str());
-        assert(local_variable != this->local_variables.end()); // this must be a local variable
-        // With an or instruction assign to a new variable
-        auto result = this->builder->CreateOr(source_in_reg, static_cast<uint64_t>(0));
-        // Transfer the name for replacing the value later.
-        // This is needed to later be able to search in the local variables map.
-        result->takeName(destination);
-        // Put the result back in the semantic stack.
-        this->semantic_stack.push_back(result);
-        // The variable must be pointed to the new value.
-        local_variable->second = result;
-        return;
-    }
-    if (destination_type == llvm::Type::getInt32PtrTy(*this->the_context))
-    {
-        // In three ways we can reach this block. Either this variable is
-        // 1. Global Integer
-        // 2. Pointer to element of global array
-        // 3. Pointer to element of local array
-        // In all cases, we can simply omit an store instruction to store the result in the desired location.
-        this->builder->CreateStore(source_in_reg, destination);
-        // Put the result back in the semantic stack.
-        this->semantic_stack.push_back(destination);
-        return;
-    }
-    assert(false);
+    // The assigned value must be a pointer. Because all variables (global or local) are pointers
+    assert(destination->getType() == llvm::Type::getInt32PtrTy(*this->the_context));
+    // In all cases, we can simply omit an store instruction to store the result in the desired location.
+    this->builder->CreateStore(source_in_reg, destination);
+    // Put the result back in the semantic stack.
+    this->semantic_stack.push_back(destination);
 }
 
 /**
@@ -529,7 +520,8 @@ void CodeGenerator::call()
     // Fix the arguments if needed (dereference pointers)
     assert(arguments.size() == function_to_call->arg_size());
     int arg_count = 0;
-    for (auto const &argument : function_to_call->args()) {
+    for (auto const &argument : function_to_call->args())
+    {
         if (argument.getType() == llvm::Type::getInt32Ty(*this->the_context)) // if this is an int, dereference it
             arguments[arg_count] = this->dereference_ptr_if_needed(arguments[arg_count]);
         arg_count++;
