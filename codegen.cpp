@@ -3,6 +3,7 @@
 #include <llvm/IR/Instructions.h>
 
 #include <array>
+#include <cassert>
 
 CodeGenerator::CodeGenerator() : the_context(std::make_unique<llvm::LLVMContext>()),
                                  the_module(std::make_unique<llvm::Module>("C-Compiler", *the_context)),
@@ -270,6 +271,10 @@ void CodeGenerator::function_end()
     this->local_variables.clear();
     if (return_type == CodeGenerator::VariableType::VOID)
         this->builder->CreateRet(nullptr); // create an implicit ret void
+    else if (return_type == CodeGenerator::VariableType::INT)
+        this->builder->CreateRet(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context.get()), 0, true)); // create an implicit ret 0
+    else
+        assert(false && "Unknown return type");
 }
 
 /**
@@ -539,10 +544,95 @@ void CodeGenerator::call()
  *
  * If the is_void parameter is true, it will emit a 'ret void' instruction.
  * Otherwise, the top of the semantic stack is returned as the return value.
+ * 
+ * Also, after inserting the return function we enter an "unreachable" block
+ * to trap everything after the return function.
  */
 void CodeGenerator::insert_return(bool is_void)
 {
     this->builder->CreateRet(is_void ? nullptr : std::get<llvm::Value *>(this->semantic_stack.back()));
     if (!is_void)
         this->semantic_stack.pop_back();
+    // Insert an unreachable block
+    this->builder->SetInsertPoint(
+        llvm::BasicBlock::Create(*this->the_context.get(), "unreachable", this->builder->GetInsertBlock()->getParent())
+    );
+}
+
+/**
+ * The if condition is called as soon as the branch of the if condition is finished and the top of the stack is the 
+ * condition. Here, we do declare every basic block for if and else and then start filling them.
+ */
+void CodeGenerator::if_condition()
+{
+    // Get the expression result
+    auto condition = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    // Convert condition to bit
+    condition = this->builder->CreateICmpNE(condition, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context.get()), 0, true));
+    // Create the basic blocks
+    IfElseBasicBlocks blocks;
+    blocks.then_block = llvm::BasicBlock::Create(*this->the_context.get(), "then", this->builder->GetInsertBlock()->getParent());
+    blocks.else_block = llvm::BasicBlock::Create(*this->the_context.get(), "else", this->builder->GetInsertBlock()->getParent());
+    blocks.aftermath_block = llvm::BasicBlock::Create(*this->the_context.get(), "aftermath", this->builder->GetInsertBlock()->getParent());
+    // Create the condition jump
+    this->builder->CreateCondBr(condition, blocks.then_block, blocks.else_block);
+    // Then, we start emitting code for the "then" block
+    this->builder->SetInsertPoint(blocks.then_block);
+    // Push the blocks into stack to handle nested ifs
+    this->semantic_stack.push_back(blocks);
+}
+
+/**
+ * This value is called if we have an if condition without "else" statement.
+ * In this case, we fill the else statement with a simple jump to aftermath and
+ * set the builder to omit in the aftermath code block.
+ * 
+ * We should also pop the semantic stack because this if statement is finished.
+ */
+void CodeGenerator::if_no_else_end()
+{
+    // Get the blocks
+    auto blocks = std::get<IfElseBasicBlocks>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    // Get the function
+    auto this_function = this->builder->GetInsertBlock()->getParent();
+    // Jump to aftermath from the "then" block
+    this->builder->CreateBr(blocks.aftermath_block);
+    // In the else, just jump to aftermath as well
+    this->builder->SetInsertPoint(blocks.else_block);
+    this->builder->CreateBr(blocks.aftermath_block);
+    // Move the pointer of the next instruction to aftermath block
+    this->builder->SetInsertPoint(blocks.aftermath_block);
+}
+
+/**
+ * This function is called as soon as the "else" statement is beginning.
+ * In this case, we should finish the "then" block with a branch to the aftermath
+ * and then move the builder insert point to the else branch.
+ */
+void CodeGenerator::if_else_begin()
+{
+    // Get the blocks
+    auto blocks = std::get<IfElseBasicBlocks>(this->semantic_stack.back());
+    // Jump to aftermath from the "then" block
+    this->builder->CreateBr(blocks.aftermath_block);
+    // Just set the insert point to "else" block
+    this->builder->SetInsertPoint(blocks.else_block);
+}
+
+/**
+ * This function is called after an if statement is finishing with an "else" statement.
+ * This means that we should at first pop the blocks from the semantic stack and
+ * and then create a branch to the aftermath block and move the insert point to it.
+ */
+void CodeGenerator::if_else_end()
+{
+    // Get the blocks
+    auto blocks = std::get<IfElseBasicBlocks>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    // Jump to aftermath from the "else" block
+    this->builder->CreateBr(blocks.aftermath_block);
+    // Just set the insert point to "aftermath" block
+    this->builder->SetInsertPoint(blocks.aftermath_block);
 }

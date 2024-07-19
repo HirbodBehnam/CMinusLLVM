@@ -31,6 +31,18 @@ struct DeclaringFunctionParameterData
     llvm::Type *type;
 };
 
+/**
+ * In each if/else statement, we have three basic blocks which are listed here.
+ */
+struct IfElseBasicBlocks
+{
+    // Executes when the condition is true.
+    llvm::BasicBlock *then_block;
+    // Executes when the condition is false. Might be an empty basic block which simply jumps to aftermath.
+    llvm::BasicBlock *else_block;
+    // After "then" and "else" blocks, control flow merges with this block.
+    llvm::BasicBlock *aftermath_block;
+};
 
 class CodeGenerator
 {
@@ -60,7 +72,7 @@ private:
         INT,
     };
     // Types which can be pushed in the semantic stack
-    typedef std::variant<llvm::Value *, llvm::Function *, CodeGenerator::VariableType, int> SemanticStaticObject;
+    typedef std::variant<llvm::Value *, llvm::Function *, IfElseBasicBlocks, CodeGenerator::VariableType, int> SemanticStaticObject;
     // The good old semantic stack
     std::vector<SemanticStaticObject> semantic_stack;
     // Name of the variable/function we are declaring
@@ -99,4 +111,8 @@ public:
     void calculate();
     void call();
     void insert_return(bool is_void);
+    void if_condition();
+    void if_no_else_end();
+    void if_else_begin();
+    void if_else_end();
 };

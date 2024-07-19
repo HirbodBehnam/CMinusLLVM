@@ -80,8 +80,10 @@ Statement: Expression-stmt | Compound-stmt | Selection-stmt | Iteration-stmt | R
 Expression-stmt: Expression SEMICOLON __pop_expression
                | BREAKSYM SEMICOLON
                | SEMICOLON ;
-Selection-stmt: IFSYM LPAREN Expression RPAREN Statement Else-stmt ;
-Else-stmt: ENDIFSYM | ELSESYM Statement ENDIFSYM ;
+Selection-stmt: IFSYM LPAREN Expression RPAREN __if_condition Statement Else-stmt ;
+Else-stmt: ENDIFSYM __if_no_else_end
+         | __if_else_begin ELSESYM Statement ENDIFSYM __if_else_end
+         ;
 Iteration-stmt: FORSYM LPAREN Expression SEMICOLON Expression SEMICOLON Expression RPAREN Statement ;
 Return-stmt: RETURNSYM Return-stmt-prime ;
 Return-stmt-prime: SEMICOLON            { GET_CODEGEN()->insert_return(true); }
@@ -135,4 +137,8 @@ __save_operator: { GET_CODEGEN()->save_operator(static_cast<CodeGenerator::Opera
 __negate: { GET_CODEGEN()->negate(); } ;
 __calculate: { GET_CODEGEN()->calculate(); } ;
 __call: { GET_CODEGEN()->call(); } ;
+__if_condition: { GET_CODEGEN()->if_condition(); } ;
+__if_no_else_end: { GET_CODEGEN()->if_no_else_end(); } ;
+__if_else_begin: { GET_CODEGEN()->if_else_begin(); } ;
+__if_else_end: { GET_CODEGEN()->if_else_end(); } ;
 %%
