@@ -78,7 +78,7 @@ Compound-stmt: LCURVBRACES Local-Declaration-list Statement-list RCURVBRACES ;
 Statement-list: Statement Statement-list | ;
 Statement: Expression-stmt | Compound-stmt | Selection-stmt | Iteration-stmt | Return-stmt ;
 Expression-stmt: Expression SEMICOLON __pop_expression
-               | BREAKSYM SEMICOLON
+               | BREAKSYM SEMICOLON   { GET_CODEGEN()->insert_break(); }
                | SEMICOLON ;
 Selection-stmt: IFSYM LPAREN Expression RPAREN __if_condition Statement Else-stmt ;
 Else-stmt: ENDIFSYM __if_no_else_end

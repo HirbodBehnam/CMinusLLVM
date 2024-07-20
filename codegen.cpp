@@ -550,7 +550,7 @@ void CodeGenerator::call()
  */
 void CodeGenerator::insert_return(bool is_void)
 {
-    this->builder->CreateRet(is_void ? nullptr : std::get<llvm::Value *>(this->semantic_stack.back()));
+    this->builder->CreateRet(is_void ? nullptr : this->dereference_ptr_if_needed(std::get<llvm::Value *>(this->semantic_stack.back())));
     if (!is_void)
         this->semantic_stack.pop_back();
     // Insert an unreachable block
@@ -660,7 +660,7 @@ void CodeGenerator::for_condition_begin()
  * When the condition ends, we have a number on top of the semantic stack and the basic blocks
  * of the for loop in the next element in the semantic stack. So we do a conditional branch to
  * either the aftermath block or the loop body.
- * 
+ *
  * Then we move the insertion point to the step block.
  */
 void CodeGenerator::for_condition_end()
@@ -691,7 +691,7 @@ void CodeGenerator::for_step_end()
 
 /**
  * After the for loop ends, we should just insert an unconditional branch to the step
- * and then pop the information about the for loop from the stack. We should also 
+ * and then pop the information about the for loop from the stack. We should also
  * move the insertion point to the aftermath.
  */
 void CodeGenerator::for_end()
@@ -700,4 +700,29 @@ void CodeGenerator::for_end()
     this->semantic_stack.pop_back(); // note that we pop the value from the stack
     this->builder->CreateBr(for_blocks.step_block);
     this->builder->SetInsertPoint(for_blocks.aftermath_block);
+}
+
+/**
+ * This code is used to insert a break statement in the code.
+ * What the break statement does is that it searches the semantic stack for
+ * a for loop and inserts a jump to the aftermath block. It also enters an unreachable
+ * block because every other instruction after this is unreachable.
+ */
+void CodeGenerator::insert_break()
+{
+    // Search for the for loop in the semantic stack
+    bool found = false;
+    for (auto i = this->semantic_stack.crbegin(); i != this->semantic_stack.crend(); i++)
+    {
+        if (std::holds_alternative<ForLoopBasicBlocks>(*i))
+        {
+            this->builder->CreateBr(std::get<ForLoopBasicBlocks>(*i).aftermath_block); // jump to end
+            found = true;
+            break;
+        }
+    }
+    assert(found);
+    // Insert an unreachable block
+    this->builder->SetInsertPoint(
+        llvm::BasicBlock::Create(*this->the_context.get(), "unreachable", this->builder->GetInsertBlock()->getParent()));
 }

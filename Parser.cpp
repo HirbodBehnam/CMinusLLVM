@@ -1344,164 +1344,170 @@ yyreduce:
 #line 1345 "Parser.cpp"
     break;
 
+  case 33: /* Expression-stmt: "break" ";"  */
+#line 81 "Parser.y"
+                                      { GET_CODEGEN()->insert_break(); }
+#line 1351 "Parser.cpp"
+    break;
+
   case 40: /* Return-stmt-prime: ";"  */
 #line 89 "Parser.y"
                                         { GET_CODEGEN()->insert_return(true); }
-#line 1351 "Parser.cpp"
+#line 1357 "Parser.cpp"
     break;
 
   case 41: /* Return-stmt-prime: Expression ";"  */
 #line 90 "Parser.y"
                                         { GET_CODEGEN()->insert_return(false); }
-#line 1357 "Parser.cpp"
+#line 1363 "Parser.cpp"
     break;
 
   case 90: /* __declaring_pid: %empty  */
 #line 124 "Parser.y"
                  { GET_CODEGEN()->declaring_pid(yylval.id); }
-#line 1363 "Parser.cpp"
+#line 1369 "Parser.cpp"
     break;
 
   case 91: /* __immediate: %empty  */
 #line 125 "Parser.y"
              { GET_CODEGEN()->immediate(yylval.num); }
-#line 1369 "Parser.cpp"
+#line 1375 "Parser.cpp"
     break;
 
   case 92: /* __int_type: %empty  */
 #line 126 "Parser.y"
             { GET_CODEGEN()->int_type(); }
-#line 1375 "Parser.cpp"
+#line 1381 "Parser.cpp"
     break;
 
   case 93: /* __void_type: %empty  */
 #line 127 "Parser.y"
              { GET_CODEGEN()->void_type(); }
-#line 1381 "Parser.cpp"
+#line 1387 "Parser.cpp"
     break;
 
   case 94: /* __function_start: %empty  */
 #line 128 "Parser.y"
                   { GET_CODEGEN()->function_start(); }
-#line 1387 "Parser.cpp"
+#line 1393 "Parser.cpp"
     break;
 
   case 95: /* __function_params_end: %empty  */
 #line 129 "Parser.y"
                        { GET_CODEGEN()->function_params_end(); }
-#line 1393 "Parser.cpp"
+#line 1399 "Parser.cpp"
     break;
 
   case 96: /* __function_end: %empty  */
 #line 130 "Parser.y"
                 { GET_CODEGEN()->function_end(); }
-#line 1399 "Parser.cpp"
+#line 1405 "Parser.cpp"
     break;
 
   case 97: /* __pid: %empty  */
 #line 131 "Parser.y"
        { GET_CODEGEN()->pid(yylval.id); }
-#line 1405 "Parser.cpp"
+#line 1411 "Parser.cpp"
     break;
 
   case 98: /* __pop_expression: %empty  */
 #line 132 "Parser.y"
                   { GET_CODEGEN()->pop_expression(); }
-#line 1411 "Parser.cpp"
+#line 1417 "Parser.cpp"
     break;
 
   case 99: /* __assign: %empty  */
 #line 133 "Parser.y"
           { GET_CODEGEN()->assign(); }
-#line 1417 "Parser.cpp"
+#line 1423 "Parser.cpp"
     break;
 
   case 100: /* __array: %empty  */
 #line 134 "Parser.y"
          { GET_CODEGEN()->array(); }
-#line 1423 "Parser.cpp"
+#line 1429 "Parser.cpp"
     break;
 
   case 101: /* __immediate_val: %empty  */
 #line 135 "Parser.y"
                  { GET_CODEGEN()->immediate_val(yylval.num); }
-#line 1429 "Parser.cpp"
+#line 1435 "Parser.cpp"
     break;
 
   case 102: /* __save_operator: %empty  */
 #line 136 "Parser.y"
                  { GET_CODEGEN()->save_operator(static_cast<CodeGenerator::Operator>(yychar)); }
-#line 1435 "Parser.cpp"
+#line 1441 "Parser.cpp"
     break;
 
   case 103: /* __negate: %empty  */
 #line 137 "Parser.y"
           { GET_CODEGEN()->negate(); }
-#line 1441 "Parser.cpp"
+#line 1447 "Parser.cpp"
     break;
 
   case 104: /* __calculate: %empty  */
 #line 138 "Parser.y"
              { GET_CODEGEN()->calculate(); }
-#line 1447 "Parser.cpp"
+#line 1453 "Parser.cpp"
     break;
 
   case 105: /* __call: %empty  */
 #line 139 "Parser.y"
         { GET_CODEGEN()->call(); }
-#line 1453 "Parser.cpp"
+#line 1459 "Parser.cpp"
     break;
 
   case 106: /* __if_condition: %empty  */
 #line 140 "Parser.y"
                 { GET_CODEGEN()->if_condition(); }
-#line 1459 "Parser.cpp"
+#line 1465 "Parser.cpp"
     break;
 
   case 107: /* __if_no_else_end: %empty  */
 #line 141 "Parser.y"
                   { GET_CODEGEN()->if_no_else_end(); }
-#line 1465 "Parser.cpp"
+#line 1471 "Parser.cpp"
     break;
 
   case 108: /* __if_else_begin: %empty  */
 #line 142 "Parser.y"
                  { GET_CODEGEN()->if_else_begin(); }
-#line 1471 "Parser.cpp"
+#line 1477 "Parser.cpp"
     break;
 
   case 109: /* __if_else_end: %empty  */
 #line 143 "Parser.y"
                { GET_CODEGEN()->if_else_end(); }
-#line 1477 "Parser.cpp"
+#line 1483 "Parser.cpp"
     break;
 
   case 110: /* __for_condition_begin: %empty  */
 #line 144 "Parser.y"
                        { GET_CODEGEN()->for_condition_begin(); }
-#line 1483 "Parser.cpp"
+#line 1489 "Parser.cpp"
     break;
 
   case 111: /* __for_condition_end: %empty  */
 #line 145 "Parser.y"
                      { GET_CODEGEN()->for_condition_end(); }
-#line 1489 "Parser.cpp"
+#line 1495 "Parser.cpp"
     break;
 
   case 112: /* __for_step_end: %empty  */
 #line 146 "Parser.y"
                 { GET_CODEGEN()->for_step_end(); }
-#line 1495 "Parser.cpp"
+#line 1501 "Parser.cpp"
     break;
 
   case 113: /* __for_end: %empty  */
 #line 147 "Parser.y"
            { GET_CODEGEN()->for_end(); }
-#line 1501 "Parser.cpp"
+#line 1507 "Parser.cpp"
     break;
 
 
-#line 1505 "Parser.cpp"
+#line 1511 "Parser.cpp"
 
       default: break;
     }

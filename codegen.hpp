@@ -134,4 +134,5 @@ public:
     void for_condition_end();
     void for_step_end();
     void for_end();
+    void insert_break();
 };
