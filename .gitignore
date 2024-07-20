@@ -2,3 +2,5 @@ compiler
 input.txt
 output.ll
 a.out
+expected.txt
+output.txt

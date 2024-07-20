@@ -56,9 +56,12 @@ void CodeGenerator::generate_prelude()
     this->builder->CreateRet(nullptr); // ret void
 }
 
-void CodeGenerator::print_code()
+void CodeGenerator::print_code(const char *output_filename)
 {
-    this->the_module->print(llvm::errs(), nullptr);
+    std::error_code error_code;
+    auto output = llvm::raw_fd_ostream(output_filename, error_code);
+    if (!error_code)
+        this->the_module->print(output, nullptr);
 }
 
 /**

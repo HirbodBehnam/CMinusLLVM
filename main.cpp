@@ -4,17 +4,20 @@
 
 #include <iostream>
 
-void parse_input(const char *filename) {
+void parse_input(const char *filename, const char *output)
+{
     yyscan_t scanner;
 
     // Open the file
     FILE *input_file = fopen(filename, "r");
-    if (input_file == nullptr) {
+    if (input_file == nullptr)
+    {
         std::cerr << "Cannot open file " << filename << std::endl;
         exit(1);
     }
 
-    if (yylex_init(&scanner)) {
+    if (yylex_init(&scanner))
+    {
         std::cerr << "Shash in init" << std::endl;
         exit(1);
     }
@@ -26,12 +29,13 @@ void parse_input(const char *filename) {
     yyset_extra(&code_generator, scanner);
 
     // Parse the input
-    if (yyparse(scanner)) {
+    if (yyparse(scanner))
+    {
         std::cerr << "Shash in parse" << std::endl;
         exit(1);
     }
 
-    code_generator.print_code();
+    code_generator.print_code(output);
 
     yylex_destroy(scanner);
     fclose(input_file);
@@ -39,10 +43,14 @@ void parse_input(const char *filename) {
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2) {
+    if (argc < 2)
+    {
         std::cerr << "Please pass the filename as the first argument." << std::endl;
         return 1;
     }
-    parse_input(argv[1]);
+    const char *output_filename = "-"; // this is stdout
+    if (argc == 3)
+        output_filename = argv[2];
+    parse_input(argv[1], output_filename);
     return 0;
 }

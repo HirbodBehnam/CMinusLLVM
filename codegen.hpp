@@ -105,6 +105,7 @@ public:
     // Function calls
     explicit CodeGenerator();
     void print_code();
+    void print_code(const char *);
     void void_type();
     void int_type();
     void declaring_pid(const char *);

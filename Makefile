@@ -14,5 +14,15 @@ Parser.cpp: Parser.y Lexer.cpp
 clean:
 	rm -f *.o *~ Lexer.cpp Lexer.hpp Parser.cpp Parser.hpp compiler
 
-test: all
-	@echo test
+verify:
+	./compiler input.txt output.ll
+	clang-15 output.ll
+	./a.out > output.txt || true
+	diff --strip-trailing-cr -u output.txt expected.txt 1>&2
+
+verify-all: all
+	for test in tests/*; do		\
+		echo "TESTING $$test";	\
+		cp $$test/* .;			\
+		make verify || exit 1;	\
+	done
