@@ -44,6 +44,21 @@ struct IfElseBasicBlocks
     llvm::BasicBlock *aftermath_block;
 };
 
+/**
+ * In each for loop, we have three basic blocks which are listed here.
+ */
+struct ForLoopBasicBlocks
+{
+    // Check for the condition of the for loop and either terminates it, or jumps to the loop
+    llvm::BasicBlock *condition_block;
+    // After each iteration, this code gets executed which usually just increments a counter
+    llvm::BasicBlock *step_block;
+    // After "then" and "else" blocks, control flow merges with this block.
+    llvm::BasicBlock *body_block;
+    // After the for loop ends, control flow merges with this block.
+    llvm::BasicBlock *aftermath_block;
+};
+
 class CodeGenerator
 {
 public:
@@ -72,7 +87,7 @@ private:
         INT,
     };
     // Types which can be pushed in the semantic stack
-    typedef std::variant<llvm::Value *, llvm::Function *, IfElseBasicBlocks, CodeGenerator::VariableType, int> SemanticStaticObject;
+    typedef std::variant<llvm::Value *, llvm::Function *, IfElseBasicBlocks, ForLoopBasicBlocks, CodeGenerator::VariableType, int> SemanticStaticObject;
     // The good old semantic stack
     std::vector<SemanticStaticObject> semantic_stack;
     // Name of the variable/function we are declaring
@@ -115,4 +130,8 @@ public:
     void if_no_else_end();
     void if_else_begin();
     void if_else_end();
+    void for_condition_begin();
+    void for_condition_end();
+    void for_step_end();
+    void for_end();
 };

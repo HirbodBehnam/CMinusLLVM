@@ -84,7 +84,7 @@ Selection-stmt: IFSYM LPAREN Expression RPAREN __if_condition Statement Else-stm
 Else-stmt: ENDIFSYM __if_no_else_end
          | __if_else_begin ELSESYM Statement ENDIFSYM __if_else_end
          ;
-Iteration-stmt: FORSYM LPAREN Expression SEMICOLON Expression SEMICOLON Expression RPAREN Statement ;
+Iteration-stmt: FORSYM LPAREN Expression __pop_expression SEMICOLON __for_condition_begin Expression __for_condition_end SEMICOLON Expression __pop_expression __for_step_end RPAREN Statement __for_end ;
 Return-stmt: RETURNSYM Return-stmt-prime ;
 Return-stmt-prime: SEMICOLON            { GET_CODEGEN()->insert_return(true); }
                  | Expression SEMICOLON { GET_CODEGEN()->insert_return(false); }
@@ -111,7 +111,7 @@ Term-zegond: Signed-factor-zegond G ;
 G: __save_operator TIMES Signed-factor __calculate G | ;
 Signed-factor: PLUS Factor | MINUS Factor __negate | Factor ;
 Signed-factor-prime: Factor-prime ;
-Signed-factor-zegond: PLUS Factor | MINUS Factor | Factor-zegond ;
+Signed-factor-zegond: PLUS Factor | MINUS Factor __negate | Factor-zegond ;
 Factor: LPAREN Expression RPAREN | ID __pid Var-call-prime | NUM __immediate_val ;
 Var-call-prime: LPAREN Args RPAREN __call | Var-prime ;
 Var-prime: LBRACES Expression RBRACES __array | ;
@@ -141,4 +141,8 @@ __if_condition: { GET_CODEGEN()->if_condition(); } ;
 __if_no_else_end: { GET_CODEGEN()->if_no_else_end(); } ;
 __if_else_begin: { GET_CODEGEN()->if_else_begin(); } ;
 __if_else_end: { GET_CODEGEN()->if_else_end(); } ;
+__for_condition_begin: { GET_CODEGEN()->for_condition_begin(); } ;
+__for_condition_end: { GET_CODEGEN()->for_condition_end(); } ;
+__for_step_end: { GET_CODEGEN()->for_step_end(); } ;
+__for_end: { GET_CODEGEN()->for_end(); } ;
 %%

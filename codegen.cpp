@@ -544,7 +544,7 @@ void CodeGenerator::call()
  *
  * If the is_void parameter is true, it will emit a 'ret void' instruction.
  * Otherwise, the top of the semantic stack is returned as the return value.
- * 
+ *
  * Also, after inserting the return function we enter an "unreachable" block
  * to trap everything after the return function.
  */
@@ -555,12 +555,11 @@ void CodeGenerator::insert_return(bool is_void)
         this->semantic_stack.pop_back();
     // Insert an unreachable block
     this->builder->SetInsertPoint(
-        llvm::BasicBlock::Create(*this->the_context.get(), "unreachable", this->builder->GetInsertBlock()->getParent())
-    );
+        llvm::BasicBlock::Create(*this->the_context.get(), "unreachable", this->builder->GetInsertBlock()->getParent()));
 }
 
 /**
- * The if condition is called as soon as the branch of the if condition is finished and the top of the stack is the 
+ * The if condition is called as soon as the branch of the if condition is finished and the top of the stack is the
  * condition. Here, we do declare every basic block for if and else and then start filling them.
  */
 void CodeGenerator::if_condition()
@@ -587,7 +586,7 @@ void CodeGenerator::if_condition()
  * This value is called if we have an if condition without "else" statement.
  * In this case, we fill the else statement with a simple jump to aftermath and
  * set the builder to omit in the aftermath code block.
- * 
+ *
  * We should also pop the semantic stack because this if statement is finished.
  */
 void CodeGenerator::if_no_else_end()
@@ -635,4 +634,70 @@ void CodeGenerator::if_else_end()
     this->builder->CreateBr(blocks.aftermath_block);
     // Just set the insert point to "aftermath" block
     this->builder->SetInsertPoint(blocks.aftermath_block);
+}
+
+/**
+ * This function marks the start of a for loop.
+ * In this function, we create the basic blocks and jump to the condition block.
+ */
+void CodeGenerator::for_condition_begin()
+{
+    // Create the basic blocks
+    ForLoopBasicBlocks blocks;
+    blocks.condition_block = llvm::BasicBlock::Create(*this->the_context.get(), "condition", this->builder->GetInsertBlock()->getParent());
+    blocks.step_block = llvm::BasicBlock::Create(*this->the_context.get(), "step", this->builder->GetInsertBlock()->getParent());
+    blocks.body_block = llvm::BasicBlock::Create(*this->the_context.get(), "body", this->builder->GetInsertBlock()->getParent());
+    blocks.aftermath_block = llvm::BasicBlock::Create(*this->the_context.get(), "aftermath", this->builder->GetInsertBlock()->getParent());
+    // From the initial block (which is unamed) jump to the condition block
+    this->builder->CreateBr(blocks.condition_block);
+    // Then, we start emitting code for the condition block
+    this->builder->SetInsertPoint(blocks.condition_block);
+    // Push the blocks into stack to handle nested for loops
+    this->semantic_stack.push_back(blocks);
+}
+
+/**
+ * When the condition ends, we have a number on top of the semantic stack and the basic blocks
+ * of the for loop in the next element in the semantic stack. So we do a conditional branch to
+ * either the aftermath block or the loop body.
+ * 
+ * Then we move the insertion point to the step block.
+ */
+void CodeGenerator::for_condition_end()
+{
+    // Get the expression result
+    auto condition = std::get<llvm::Value *>(this->semantic_stack.back());
+    this->semantic_stack.pop_back();
+    // Get the blocks
+    auto for_blocks = std::get<ForLoopBasicBlocks>(this->semantic_stack.back());
+    // Compare with zero and jump
+    condition = this->builder->CreateICmpNE(condition, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context.get()), 0, true));
+    // Create the condition jump
+    this->builder->CreateCondBr(condition, for_blocks.body_block, for_blocks.aftermath_block);
+    // Then create the code for step
+    this->builder->SetInsertPoint(for_blocks.step_block);
+}
+
+/**
+ * When the step of the for loop ends and the body starts, we should only move the
+ * insertion point to the for body and after the condition, jump to the condition.
+ */
+void CodeGenerator::for_step_end()
+{
+    auto for_blocks = std::get<ForLoopBasicBlocks>(this->semantic_stack.back());
+    this->builder->CreateBr(for_blocks.condition_block);
+    this->builder->SetInsertPoint(for_blocks.body_block);
+}
+
+/**
+ * After the for loop ends, we should just insert an unconditional branch to the step
+ * and then pop the information about the for loop from the stack. We should also 
+ * move the insertion point to the aftermath.
+ */
+void CodeGenerator::for_end()
+{
+    auto for_blocks = std::get<ForLoopBasicBlocks>(this->semantic_stack.back());
+    this->semantic_stack.pop_back(); // note that we pop the value from the stack
+    this->builder->CreateBr(for_blocks.step_block);
+    this->builder->SetInsertPoint(for_blocks.aftermath_block);
 }
