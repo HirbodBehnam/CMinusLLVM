@@ -571,6 +571,7 @@ void CodeGenerator::if_condition()
     auto condition = std::get<llvm::Value *>(this->semantic_stack.back());
     this->semantic_stack.pop_back();
     // Convert condition to bit
+    condition = this->dereference_ptr_if_needed(condition);
     condition = this->builder->CreateICmpNE(condition, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context.get()), 0, true));
     // Create the basic blocks
     IfElseBasicBlocks blocks;
@@ -674,6 +675,7 @@ void CodeGenerator::for_condition_end()
     // Get the blocks
     auto for_blocks = std::get<ForLoopBasicBlocks>(this->semantic_stack.back());
     // Compare with zero and jump
+    condition = this->dereference_ptr_if_needed(condition);
     condition = this->builder->CreateICmpNE(condition, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*this->the_context.get()), 0, true));
     // Create the condition jump
     this->builder->CreateCondBr(condition, for_blocks.body_block, for_blocks.aftermath_block);

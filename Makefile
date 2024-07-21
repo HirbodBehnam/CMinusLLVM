@@ -1,3 +1,6 @@
+n=\e[0m
+g=\e[1;32m
+
 FILES = Lexer.cpp Parser.cpp codegen.cpp main.cpp
 CC = clang++-15
 CFLAGS = `llvm-config-15 --cxxflags --ldflags --system-libs --libs core` -std=c++17 -ggdb -O0
@@ -25,4 +28,5 @@ verify-all: all
 		echo "TESTING $$test";	\
 		cp $$test/* .;			\
 		make verify || exit 1;	\
-	done
+	done;						\
+	echo "$gAll tests passed!$n";
