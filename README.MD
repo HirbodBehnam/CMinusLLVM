@@ -27,10 +27,6 @@ Tests can be run via `make verify-all` command. If any of the tests fail, the te
 
 Currently, the compiler does not have an semantic analyzer which means that most of errors are either not caught at all or result in an assertion failure that results in compiler aborting.
 
-### Input
-
-Currently, there is no way to get input from the user which will change very soon.
-
 ### Optimizer
 
 Literally the amount of optimizations done for the IR is fucking zero. Even the constant folding is turned off. You can turn on the constant folding by changing `the_builder` initialization with this line:
@@ -39,6 +35,20 @@ Literally the amount of optimizations done for the IR is fucking zero. Even the 
 builder(std::make_unique<llvm::IRBuilder<llvm::NoFolder>>(*the_context))
 ```
 
+### Exit Code
+
+The exit code of the compiled program is almost always non zero. The program runs successfully but the return value must be explicitly defined which in this case is not.
+
 ## Language Specification
 
 The language specification (the assignments) is placed in the `spec` folder.
+
+Alongside the specification, there is also an addition: The `input()` function. This function will simply read an integer from stdin. For example, this program can be used to calculate the square of a number:
+
+```c
+void main(void){
+	int a;
+	a = input();
+	output(a * a);
+}
+```

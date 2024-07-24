@@ -21,22 +21,32 @@ CodeGenerator::CodeGenerator() : the_context(std::make_unique<llvm::LLVMContext>
 void CodeGenerator::generate_prelude()
 {
     // First we declare a global variable of chars which holds "%d\n\0".
-    auto format_string_type = llvm::ArrayType::get(llvm::Type::getInt8Ty(*this->the_context), 4);
-    std::array format_string_bytes{
+    auto print_format_string_type = llvm::ArrayType::get(llvm::Type::getInt8Ty(*this->the_context), 4);
+    std::array print_format_string_bytes{
         static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), '%')),
         static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), 'd')),
         static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), '\n')),
         static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), '\0')),
     };
-    auto format_string_value = llvm::ConstantArray::get(format_string_type, llvm::ArrayRef(format_string_bytes));
+    auto print_format_string_value = llvm::ConstantArray::get(print_format_string_type, llvm::ArrayRef(print_format_string_bytes));
     // NOTE: this value is declared with new to outlive the program. I should not be freed until the very end
-    auto number_format = new llvm::GlobalVariable(*this->the_module, format_string_type, true, llvm::GlobalValue::LinkageTypes::PrivateLinkage, format_string_value, "number_format");
-    // Declare the printf function from standard C library
-    std::array printf_function_arguments{
-        static_cast<llvm::Type *>(llvm::PointerType::getUnqual(format_string_type)),
+    auto printf_number_format = new llvm::GlobalVariable(*this->the_module, print_format_string_type, true, llvm::GlobalValue::LinkageTypes::PrivateLinkage, print_format_string_value, "print_number_format");
+    // The same thing for the input function. It holds "%d\0".
+    auto scanf_format_string_type = llvm::ArrayType::get(llvm::Type::getInt8Ty(*this->the_context), 3);
+    std::array scanf_format_string_bytes{
+        static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), '%')),
+        static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), 'd')),
+        static_cast<llvm::Constant *>(llvm::ConstantInt::get(llvm::Type::getInt8Ty(*this->the_context), '\0')),
     };
-    auto printf_function_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*this->the_context), llvm::ArrayRef(printf_function_arguments), true);
-    auto printf_function = llvm::Function::Create(printf_function_type, llvm::GlobalValue::LinkageTypes::ExternalLinkage, "printf", this->the_module.get());
+    auto scanf_format_string_value = llvm::ConstantArray::get(scanf_format_string_type, llvm::ArrayRef(scanf_format_string_bytes));
+    auto scanf_number_format = new llvm::GlobalVariable(*this->the_module, scanf_format_string_type, true, llvm::GlobalValue::LinkageTypes::PrivateLinkage, scanf_format_string_value, "scanf_number_format");    
+    // Declare the printf and scanf functions from standard C library
+    std::array printf_scanf_function_arguments{
+        static_cast<llvm::Type *>(llvm::PointerType::getUnqual(print_format_string_type)),
+    };
+    auto printf_scanf_function_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*this->the_context), llvm::ArrayRef(printf_scanf_function_arguments), true);
+    auto printf_function = llvm::Function::Create(printf_scanf_function_type, llvm::GlobalValue::LinkageTypes::ExternalLinkage, "printf", this->the_module.get());
+    auto scanf_function = llvm::Function::Create(printf_scanf_function_type, llvm::GlobalValue::LinkageTypes::ExternalLinkage, "scanf", this->the_module.get());
     // Declare the output function which simply prints an int
     std::array output_function_arguments{
         static_cast<llvm::Type *>(llvm::Type::getInt32Ty(*this->the_context)),
@@ -49,11 +59,26 @@ void CodeGenerator::generate_prelude()
     this->builder->SetInsertPoint(output_function_block);
     std::array output_function_call_arguments{
         // the string format and the number
-        static_cast<llvm::Value *>(number_format),
+        static_cast<llvm::Value *>(printf_number_format),
         static_cast<llvm::Value *>(output_function->getArg(0)),
     };
     this->builder->CreateCall(printf_function, llvm::ArrayRef(output_function_call_arguments));
     this->builder->CreateRet(nullptr); // ret void
+    // Declare the input function which simply reads an int from stdin using scanf
+    auto input_function_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*this->the_context), false);
+    auto input_function = llvm::Function::Create(input_function_type, llvm::GlobalValue::LinkageTypes::PrivateLinkage, "input", this->the_module.get());
+    auto input_function_block = llvm::BasicBlock::Create(*this->the_context, "", input_function);
+    this->builder->SetInsertPoint(input_function_block);
+    // First allocate an int on the stack to get the pointer of it
+    auto input_result = this->builder->CreateAlloca(llvm::Type::getInt32Ty(*this->the_context));
+    std::array input_function_call_arguments{
+        // the string format and the number pointer
+        static_cast<llvm::Value *>(scanf_number_format),
+        static_cast<llvm::Value *>(input_result),
+    };
+    this->builder->CreateCall(scanf_function, llvm::ArrayRef(input_function_call_arguments));
+    auto input_result_reg = this->builder->CreateLoad(llvm::Type::getInt32Ty(*this->the_context), input_result);
+    this->builder->CreateRet(input_result_reg);
 }
 
 void CodeGenerator::print_code(const char *output_filename)
