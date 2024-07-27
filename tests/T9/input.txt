@@ -33,7 +33,7 @@ int func(int n, int m){
 }
 
 
-void main(void){
+int main(void){
 	int m;
 	int n;
 	m = 5;

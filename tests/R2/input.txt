@@ -10,7 +10,7 @@ int fib(int n) {
     return f;
 }
 
-void main(void)
+int main(void)
 {
      output(fib(3));
 }

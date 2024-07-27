@@ -1,5 +1,5 @@
 /*==== Sample T3 ====*/
-void main(void) {
+int main(void) {
 	int arr[10];
 	int var1;
 	int var2;

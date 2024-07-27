@@ -31,7 +31,7 @@ void f(int a, int c){
 	output(i + 2);
 }
 
-void main(void) {
+int main(void) {
     int x;
     int y;
     x = 1;

@@ -25,7 +25,7 @@ int fib(int n){
 	return res;
 }
 
-void main(void){
+int main(void){
 	int a[9];
 	int j;
         for (j=0; j< 9; j=j+1){

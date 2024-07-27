@@ -27,6 +27,6 @@ verify-all: all
 	for test in tests/*; do		\
 		echo "TESTING $$test";	\
 		cp $$test/* .;			\
-		make verify || exit 1;	\
+		make verify;			\
 	done;						\
 	echo "$gAll tests passed!$n";

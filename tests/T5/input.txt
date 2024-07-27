@@ -48,7 +48,7 @@ int isMultiplier(int a, int b) {
     return flag;
 }
 
-void main(void) {
+int main(void) {
     int i;
     int j;
     int sum;

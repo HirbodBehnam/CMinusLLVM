@@ -23,7 +23,7 @@ int rec(int a, int b){
 	return res;
 }
 
-void main (void) {
+int main (void) {
 	int x;
 	int y;
 	i = 0;

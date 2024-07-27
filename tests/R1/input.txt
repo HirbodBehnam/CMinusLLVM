@@ -11,7 +11,7 @@ int func(int a){
 	return result;
 }
 
-void main(void) {
+int main(void) {
     int a;
     a = 5;
     func(a);

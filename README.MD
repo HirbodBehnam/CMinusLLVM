@@ -35,10 +35,6 @@ Literally the amount of optimizations done for the IR is fucking zero. Even the 
 builder(std::make_unique<llvm::IRBuilder<llvm::NoFolder>>(*the_context))
 ```
 
-### Exit Code
-
-The exit code of the compiled program is almost always non zero. The program runs successfully but the return value must be explicitly defined which in this case is not.
-
 ## Language Specification
 
 The language specification (the assignments) is placed in the `spec` folder.
@@ -46,7 +42,7 @@ The language specification (the assignments) is placed in the `spec` folder.
 Alongside the specification, there is also an addition: The `input()` function. This function will simply read an integer from stdin. For example, this program can be used to calculate the square of a number:
 
 ```c
-void main(void){
+int main(void){
 	int a;
 	a = input();
 	output(a * a);

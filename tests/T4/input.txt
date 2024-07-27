@@ -7,7 +7,7 @@ void printArray(int A[], int size)
     }
 }
 
-void main(void)
+int main(void)
 {
     int arr[10];
     int arrsize;

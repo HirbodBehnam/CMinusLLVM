@@ -3,7 +3,7 @@
 int a;
 int b;
 
-void main(void) {
+int main(void) {
     int c;
     int d;
     a = c = 100;

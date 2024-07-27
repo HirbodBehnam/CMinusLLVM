@@ -10,7 +10,7 @@ int foo(int x){
 	} endif
 }
 
-void main(void){
+int main(void){
 	int i;
 	int j;
 	i= foo(0);
